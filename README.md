@@ -29,6 +29,7 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 * 3: TCB0 (Off,PW,Frequency,PW&Frequency,OUTPUT,SENT_First,SENT_Second,SENT_First&Second)
 * 2: TCB0 Input Port (PORTA, PORTB, PORTC, RESERVED)
 * 8: TCB0 PinMask
+* 3: TCB1 CLK
 * 3: TCB1 (Off,PW,Frequency,PW&Frequency,OUTPUT,SENT_First,SENT_Second,SENT_First&Second)
 * 2: TCB1 Input Port (PORTA, PORTB, PORTC, RESERVED)
 * 8: TCB1 PinMask
@@ -44,7 +45,7 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 * 8: OUTC
 * 8: CRC
 ### 0x2 Analog In Stream
-* 4: Length
+* 8: Byte Length
 * [12 + Log2(decimation+1)]: Analog Value x
 * 8: CRC
 ### 0x3 TCA0 PulseWidth Out 0 <br/> 0x4 TCA0 PulseWidth Out 1 <br/> 0x5 TCA0 PulseWidth Out 2 <br/> 0x6 TCA0 PulseWidth In Stream <br/> 0x8 TCB0 PulseWidth In Stream <br/> 0xA TCB1 PulseWidth In Stream
