@@ -50,9 +50,14 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 ## 0x3 TCA0 PulseWidth Out 0
 ## 0x4 TCA0 PulseWidth Out 1
 ## 0x5 TCA0 PulseWidth Out 2
+## 0x6 TCA0 PulseWidth In Stream
+## 0x8 TCB0 PulseWidth In Stream
+## 0xA TCB1 PulseWidth In Stream
 * 16: Pulsewidth
 * 8: CRC
 ## 0x6 TCA0 Frequency Out
+## 0x8 TCB0 Frequency In Stream
+## 0xA TCB1 Frequency In Stream
 * 16: Frequency
 * 8: CRC
 ## 0x6 TCA0 SENT In Stream (1 value)
@@ -66,15 +71,6 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 ## 0xB TCB1 SENT In Stream (2 values)
 * 12: Value1
 * 12: Value2
-* 8: CRC
-## 0x6 TCA0 PulseWidth In Stream
-## 0x8 TCB0 PulseWidth In Stream
-## 0xA TCB1 PulseWidth In Stream
-* 16: Pulsewidth
-* 8: CRC
-## 0x8 TCB0 Frequency In Stream
-## 0xA TCB1 Frequency In Stream
-* 16: Frequency
 * 8: CRC
 ## 0xC TCB0 Pulsewidth and Frequency In Stream
 ## 0xD TCB0 Pulsewidth and Frequency In Stream
