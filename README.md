@@ -5,9 +5,10 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 
 # Commands
 ### Header
-* 4: Command
 * 4: Index
-### 0x0 Setup
+* 4: Command
+### 0x0 NOP
+### 0x1 Setup
 * 4: Index Assignment
 * 1: PC5 -> PB7 passthrough
 * 1: PC2 -> PC4 passthrough
@@ -34,40 +35,40 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 * 2: TCB1 Input Port (PORTA, PORTB, PORTC, RESERVED)
 * 8: TCB1 PinMask
 * 8: CRC
-### 0x1 GPIO In Stream
+### 0x2 GPIO In Stream
 * 8: INA
 * 8: INB
 * 8: INC
 * 8: CRC
-### 0x1 GPIO Out
+### 0x2 GPIO Out
 * 8: OUTA
 * 8: OUTB
 * 8: OUTC
 * 8: CRC
-### 0x2 Analog In Stream
+### 0x3 Analog In Stream
 * 8: Byte Length
 * [12 + Log2(decimation+1)]: Analog Value x
 * 8: CRC
-### 0x3 TCA0 PulseWidth Out 0 <br/> 0x4 TCA0 PulseWidth Out 1 <br/> 0x5 TCA0 PulseWidth Out 2 <br/> 0x6 TCA0 PulseWidth In Stream <br/> 0x8 TCB0 PulseWidth In Stream <br/> 0xA TCB1 PulseWidth In Stream
+### 0x4 TCA0 PulseWidth Out 0 <br/> 0x5 TCA0 PulseWidth Out 1 <br/> 0x6 TCA0 PulseWidth Out 2 <br/> 0x7 TCA0 PulseWidth In Stream <br/> 0x9 TCB0 PulseWidth In Stream <br/> 0xB TCB1 PulseWidth In Stream
 * 16: Pulsewidth
 * 8: CRC
-### 0x6 TCA0 Frequency Out <br/> 0x8 TCB0 Frequency In Stream <br/> 0xA TCB1 Frequency In Stream
+### 0x7 TCA0 Frequency Out <br/> 0x9 TCB0 Frequency In Stream <br/> 0xB TCB1 Frequency In Stream
 * 16: Frequency
 * 8: CRC
-### 0x6 TCA0 SENT In Stream (1 value) <br/> 0x8 TCB0 SENT In Stream (1 value) <br/> 0xA TCB1 SENT In Stream (1 value)
+### 0x7 TCA0 SENT In Stream (1 value) <br/> 0x9 TCB0 SENT In Stream (1 value) <br/> 0xB TCB1 SENT In Stream (1 value)
 * 12: Value
 * 4: Reserved
 * 8: CRC
-### 0x7 TCA0 SENT In Stream (2 values) <br/> 0x9 TCB0 SENT In Stream (2 values) <br/> 0xB TCB1 SENT In Stream (2 values)
+### 0x8 TCA0 SENT In Stream (2 values) <br/> 0xA TCB0 SENT In Stream (2 values) <br/> 0xC TCB1 SENT In Stream (2 values)
 * 12: Value1
 * 12: Value2
 * 8: CRC
-### 0xC TCB0 Pulsewidth and Frequency In Stream <br/> 0xD TCB0 Pulsewidth and Frequency In Stream
+### 0xD TCB0 Pulsewidth and Frequency In Stream <br/> 0xE TCB0 Pulsewidth and Frequency In Stream
 * 16: Pulsewidth
 * 16: Frequency
 * 8: CRC
-### 0x8 TCB0 Pulsewidth and Frequency OUT <br/> 0xA TCB1 Pulsewidth and Frequency OUT
+### 0x9 TCB0 Pulsewidth and Frequency OUT <br/> 0xB TCB1 Pulsewidth and Frequency OUT
 * 8: Pulsewidth
 * 8: Frequency
 * 8: CRC
-
+### 0xF NOP
