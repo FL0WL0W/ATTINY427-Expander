@@ -47,7 +47,8 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 * 8: CRC
 ### 0x3 Analog In Stream
 * 8: Byte Length
-* [12 + Log2(decimation+1)]: Analog Value x
+* 16: Analog Value x
+* ...
 * 8: CRC
 ### 0x4 TCA0 PulseWidth Out 0 <br/> 0x5 TCA0 PulseWidth Out 1 <br/> 0x6 TCA0 PulseWidth Out 2 <br/> 0x7 TCA0 PulseWidth In Stream <br/> 0x9 TCB0 PulseWidth In Stream <br/> 0xB TCB1 PulseWidth In Stream
 * 16: Pulsewidth
