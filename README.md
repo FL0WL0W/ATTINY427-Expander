@@ -19,9 +19,9 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 * 4: ADC Decimation
 * 15: Analog In x Enable
 * 9: Digital Input Stream Period (1/32768s, 0=disabled)
-* 6: PORTC Digital Input Enable
-* 8: PORTB Digital Input Enable
-* 8: PORTA Digital Input Enable
+* 6: PORTC Digital Direction
+* 8: PORTB Digital Direction
+* 8: PORTA Digital Direction
 * 3: TCA0 CLK
 * 3: TCA0 (Off,PW,RESERVED,RESERVED,OUTPUT,SENT_First,SENT_Second,SENT_First&Second)
 * 2: TCA0 Input Port (PORTA, PORTB, PORTC, RESERVED)
@@ -52,8 +52,8 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 ### 0x4 TCA0 PulseWidth Out 0 <br/> 0x5 TCA0 PulseWidth Out 1 <br/> 0x6 TCA0 PulseWidth Out 2 <br/> 0x7 TCA0 PulseWidth In Stream <br/> 0x9 TCB0 PulseWidth In Stream <br/> 0xB TCB1 PulseWidth In Stream
 * 16: Pulsewidth
 * 8: CRC
-### 0x7 TCA0 Frequency Out <br/> 0x9 TCB0 Frequency In Stream <br/> 0xB TCB1 Frequency In Stream
-* 16: Frequency
+### 0x7 TCA0 Period Out <br/> 0x9 TCB0 Period In Stream <br/> 0xB TCB1 Period In Stream
+* 16: Period
 * 8: CRC
 ### 0x7 TCA0 SENT In Stream (1 value) <br/> 0x9 TCB0 SENT In Stream (1 value) <br/> 0xB TCB1 SENT In Stream (1 value)
 * 12: Value
@@ -63,12 +63,12 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 * 12: Value1
 * 12: Value2
 * 8: CRC
-### 0xD TCB0 Pulsewidth and Frequency In Stream <br/> 0xE TCB0 Pulsewidth and Frequency In Stream
+### 0xD TCB0 Pulsewidth and Period In Stream <br/> 0xE TCB0 Pulsewidth and Period In Stream
 * 16: Pulsewidth
-* 16: Frequency
+* 16: Period
 * 8: CRC
-### 0x9 TCB0 Pulsewidth and Frequency OUT <br/> 0xB TCB1 Pulsewidth and Frequency OUT
+### 0x9 TCB0 Pulsewidth and Period OUT <br/> 0xB TCB1 Pulsewidth and Period OUT
 * 8: Pulsewidth
-* 8: Frequency
+* 8: Period
 * 8: CRC
 ### 0xF NOP
