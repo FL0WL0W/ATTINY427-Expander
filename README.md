@@ -14,61 +14,81 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 * 1: PC2 -> PC4 passthrough
 * 1: PA0 -> PB4 passthrough
 * 1: PB6 -> PA5 passthrough
+
 * 1: PC4 -> PC2 passthrough
 * 1: PA5 -> PB6 passthrough
-* 4: ADC Decimation
+* 2: Reserved
+* 4: ADC Accumulate
+
+* 8: ADC Sample Duration
+
 * 15: Analog In x Enable
 * 9: Digital Input Stream Period (1/32768s, 0=disabled)
-* 6: PORTC Digital Direction
-* 8: PORTB Digital Direction
-* 8: PORTA Digital Direction
+
+* 8: PORTA Direction
+
+* 8: PORTB Direction
+
+* 8: PORTC Direction
+
 * 3: TCA0 CLK
 * 3: TCA0 (Off,PW,RESERVED,RESERVED,OUTPUT,SENT_First,SENT_Second,SENT_First&Second)
 * 2: TCA0 Input Port (PORTA, PORTB, PORTC, RESERVED)
+
 * 8: TCA0 PinMask
+
 * 3: TCB0 CLK
 * 3: TCB0 (Off,PW,Frequency,PW&Frequency,OUTPUT,SENT_First,SENT_Second,SENT_First&Second)
 * 2: TCB0 Input Port (PORTA, PORTB, PORTC, RESERVED)
+
 * 8: TCB0 PinMask
+
 * 3: TCB1 CLK
 * 3: TCB1 (Off,PW,Frequency,PW&Frequency,OUTPUT,SENT_First,SENT_Second,SENT_First&Second)
 * 2: TCB1 Input Port (PORTA, PORTB, PORTC, RESERVED)
+
 * 8: TCB1 PinMask
+
 * 8: CRC
-### 0x2 GPIO In Stream
+### 0x2 GPIO Direction
+* 8: DIRECTIONA
+* 8: DIRECTIONB
+* 8: DIRECTIONC
+* 8: CRC
+### 0x3 GPIO In Stream
 * 8: INA
 * 8: INB
 * 8: INC
 * 8: CRC
-### 0x2 GPIO Out
+### 0x3 GPIO Out
 * 8: OUTA
 * 8: OUTB
 * 8: OUTC
 * 8: CRC
-### 0x3 Analog In Stream
+### 0x4 Analog In Stream
 * 8: Byte Length
 * 16: Analog Value x
 * ...
 * 8: CRC
-### 0x4 TCA0 PulseWidth Out 0 <br/> 0x5 TCA0 PulseWidth Out 1 <br/> 0x6 TCA0 PulseWidth Out 2 <br/> 0x7 TCA0 PulseWidth In Stream <br/> 0x9 TCB0 PulseWidth In Stream <br/> 0xB TCB1 PulseWidth In Stream
+### 0x5 TCA0 PulseWidth Out 0 <br/> 0x6 TCA0 PulseWidth Out 1 <br/> 0x7 TCA0 PulseWidth Out 2 <br/> 0x8 TCA0 PulseWidth In Stream <br/> 0xA TCB0 PulseWidth In Stream <br/> 0xC TCB1 PulseWidth In Stream
 * 16: Pulsewidth
 * 8: CRC
-### 0x7 TCA0 Period Out <br/> 0x9 TCB0 Period In Stream <br/> 0xB TCB1 Period In Stream
+### 0x8 TCA0 Period Out <br/> 0xA TCB0 Period In Stream <br/> 0xC TCB1 Period In Stream
 * 16: Period
 * 8: CRC
-### 0x7 TCA0 SENT In Stream (1 value) <br/> 0x9 TCB0 SENT In Stream (1 value) <br/> 0xB TCB1 SENT In Stream (1 value)
+### 0x8 TCA0 SENT In Stream (1 value) <br/> 0xA TCB0 SENT In Stream (1 value) <br/> 0xC TCB1 SENT In Stream (1 value)
 * 12: Value
 * 4: Reserved
 * 8: CRC
-### 0x8 TCA0 SENT In Stream (2 values) <br/> 0xA TCB0 SENT In Stream (2 values) <br/> 0xC TCB1 SENT In Stream (2 values)
+### 0x9 TCA0 SENT In Stream (2 values) <br/> 0xB TCB0 SENT In Stream (2 values) <br/> 0xD TCB1 SENT In Stream (2 values)
 * 12: Value1
 * 12: Value2
 * 8: CRC
-### 0xD TCB0 Pulsewidth and Period In Stream <br/> 0xE TCB0 Pulsewidth and Period In Stream
+### 0xE TCB0 Pulsewidth and Period In Stream <br/> 0xF TCB0 Pulsewidth and Period In Stream
 * 16: Pulsewidth
 * 16: Period
 * 8: CRC
-### 0x9 TCB0 Pulsewidth and Period OUT <br/> 0xB TCB1 Pulsewidth and Period OUT
+### 0xA TCB0 Pulsewidth and Period OUT <br/> 0xC TCB1 Pulsewidth and Period OUT
 * 8: Pulsewidth
 * 8: Period
 * 8: CRC
