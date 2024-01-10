@@ -35,6 +35,11 @@ setupbuf:
     .byte
     .byte
     .byte
+    .byte
+    .byte
+    .byte
+    .byte
+    .byte
 rxfwdsetupbuf: 
     .byte
     .byte
@@ -355,6 +360,9 @@ RXCMDSetup:
     SWAP rxcmd0
     DEC rxcmd0
     SWAP rxcmd0
+    LDI intgpr, 2
+    MOV rxcmd2, intgpr
+    MOV rxcmd3, zero
     RETI
 RXCMDSETUPSTORE:
     LDI rxstate, 79
@@ -384,9 +392,9 @@ RXSTORESETUPCRCCC:
     LDI rxstate, 79
     LDI intgpr, 5
     ADD rxcmd0, intgpr
-    LDI intgpr, 15
+    LDI intgpr, 10
     CPSE rxcmd0, intgpr
-    LDI rxstate, 66
+    LDI rxstate, 70
     RETI
 
 RXFWDSETUPSTORE1:
@@ -413,7 +421,7 @@ NOTPROCESSINGFWDSETUP:
     RETI
 
 RXFWDSETUP:
-    ; store command in fwd buffer 1
+    ; store command in fwd buffer setup
     LDI ZL, lo8(rxfwdsetupbuf)
     LDI ZH, hi8(rxfwdsetupbuf)
     SBRC rxcmd3, 0
@@ -860,15 +868,6 @@ RXEXESETUP:
     MOV intgpr, rxcmd0
     ANDI intgpr, 0b11111110
     OUT analogenable0, intgpr
-    ; set PORTA Direction
-    LD intgpr, Z+
-    OUT VPORTA_DIR, intgpr
-    ; set PORTB Direction
-    LD intgpr, Z+
-    OUT VPORTB_DIR, intgpr
-    ; set PORTC Direction
-    LD intgpr, Z+
-    OUT VPORTC_DIR, intgpr
     ; setup TCA0
     LD rxcmd0, Z+
     LD rxcmd1, Z+
@@ -878,8 +877,6 @@ RXEXESETUP:
     LD rxcmd1, Z+
     ; TODO
     ; setup TCB1
-    LD rxcmd0, Z+
-    LD rxcmd1, Z+
     ; TODO
     RETI
 

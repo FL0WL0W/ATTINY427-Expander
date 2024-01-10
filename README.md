@@ -25,12 +25,6 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 * 15: Analog In x Enable
 * 9: Digital Input Stream Period (1/32768s, 0=disabled)
 
-* 8: PORTA Direction
-
-* 8: PORTB Direction
-
-* 8: PORTC Direction
-
 * 3: TCA0 CLK
 * 3: TCA0 (Off,PW,RESERVED,RESERVED,OUTPUT,SENT_First,SENT_Second,SENT_First&Second)
 * 2: TCA0 Input Port (PORTA, PORTB, PORTC, RESERVED)
@@ -48,6 +42,8 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 * 2: TCB1 Input Port (PORTA, PORTB, PORTC, RESERVED)
 
 * 8: TCB1 PinMask
+
+* 16: Reserved
 
 * 8: CRC
 ### 0x2 GPIO Direction
