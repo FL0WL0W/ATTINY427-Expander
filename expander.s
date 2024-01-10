@@ -228,7 +228,7 @@ __vector_17:
     ADC ZH, zero
     ; store char in intgpr before switch
     LDS intgpr, USART0_RXDATAL
-    IJMP
+    IJMP ; 9 clock cycles to here
 
 RXStateSwitch:
     .int RXCMD             ; 0
@@ -327,7 +327,7 @@ RXCMD:
     LDI ZH, hi8(RXCMDSwitch)
     ADD ZL, intgpr
     ADC ZH, zero
-    IJMP
+    IJMP ; 18 clock cycles to here
 
 RXCMDSwitch:
     .int RXNOPFwd
@@ -810,7 +810,7 @@ RXEXECRCCC:
     LDI ZH, hi8(RXEXESwitch)
     ADD ZL, intgpr
     ADC ZH, zero
-    IJMP
+    IJMP ; 26 clock cycles to here
 
 RXEXESwitch:
     .int RXEXENOP
