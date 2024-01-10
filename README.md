@@ -88,4 +88,3 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 * 8: Pulsewidth
 * 8: Period
 * 8: CRC
-### 0xF NOP
