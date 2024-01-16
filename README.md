@@ -1,7 +1,7 @@
 # ATTiny427 Expander
 This project is to create a GPIO expander that takes and sends commands over UART connection. 
 Up to 16 of these expanders can be daisy chained, only limited by the bandwidth of the maximum 2.5Mhz UART. 
-This also adds 4 passthrough connection paths so that the ATTiny output buffers can be used.
+This also adds 4 inverted passthrough connection paths so that the ATTiny output buffers can be used.
 
 # Commands
 ### Header
@@ -10,13 +10,13 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 ### 0x0 NOP
 ### 0x1 Setup
 * 4: Index Assignment
-* 1: PC5 -> PB7 passthrough
-* 1: PC2 -> PC4 passthrough
-* 1: PA0 -> PB4 passthrough
-* 1: PB6 -> PA5 passthrough
+* 1: PC5 -> PB7 inverted passthrough
+* 1: PC2 -> PC4 inverted passthrough
+* 1: PA0 -> PB4 inverted passthrough
+* 1: PB6 -> PA5 inverted passthrough
 
-* 1: PC4 -> PC2 passthrough
-* 1: PA5 -> PB6 passthrough
+* 1: PC4 -> PC2 inverted passthrough
+* 1: PA5 -> PB6 inverted passthrough
 * 2: Reserved
 * 4: ADC Accumulate
 
@@ -24,12 +24,6 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 
 * 15: Analog In x Enable
 * 9: Digital Input Stream Period (1/32768s, 0=disabled)
-
-* 3: TCA0 CLK
-* 3: TCA0 (Off,PW,RESERVED,RESERVED,OUTPUT,SENT_First,SENT_Second,SENT_First&Second)
-* 2: TCA0 Input Port (PORTA, PORTB, PORTC, RESERVED)
-
-* 8: TCA0 PinMask
 
 * 3: TCB0 CLK
 * 3: TCB0 (Off,PW,Frequency,PW&Frequency,OUTPUT,SENT_First,SENT_Second,SENT_First&Second)
@@ -42,6 +36,12 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 * 2: TCB1 Input Port (PORTA, PORTB, PORTC, RESERVED)
 
 * 8: TCB1 PinMask
+
+* 3: TCA0 CLK
+* 3: TCA0 (Off,PW,RESERVED,RESERVED,OUTPUT,SENT_First,SENT_Second,SENT_First&Second)
+* 2: TCA0 Input Port (PORTA, PORTB, PORTC, RESERVED)
+
+* 8: TCA0 PinMask
 
 * 16: Reserved
 
@@ -66,17 +66,17 @@ This also adds 4 passthrough connection paths so that the ATTiny output buffers 
 * 16: Analog Value x
 * ...
 * 8: CRC
-### 0x5 TCA0 PulseWidth Out 0 <br/> 0x6 TCA0 PulseWidth Out 1 <br/> 0x7 TCA0 PulseWidth Out 2 <br/> 0x8 TCA0 PulseWidth In Stream <br/> 0xA TCB0 PulseWidth In Stream <br/> 0xC TCB1 PulseWidth In Stream
+### 0x5 TCA0 PulseWidth Out 0 <br/> 0x6 TCA0 PulseWidth Out 1 <br/> 0x7 TCA0 PulseWidth Out 2 <br/> 0x8 TCA0 PulseWidth In Stream (FUTURE) <br/> 0xA TCB0 PulseWidth In Stream <br/> 0xC TCB1 PulseWidth In Stream
 * 16: Pulsewidth
 * 8: CRC
 ### 0x8 TCA0 Period Out <br/> 0xA TCB0 Period In Stream <br/> 0xC TCB1 Period In Stream
 * 16: Period
 * 8: CRC
-### 0x8 TCA0 SENT In Stream (1 value) <br/> 0xA TCB0 SENT In Stream (1 value) <br/> 0xC TCB1 SENT In Stream (1 value)
+### 0x8 TCA0 SENT In Stream (1 value) (FUTURE)<br/> 0xA TCB0 SENT In Stream (1 value) (FUTURE)<br/> 0xC TCB1 SENT In Stream (1 value) (FUTURE)
 * 12: Value
 * 4: Reserved
 * 8: CRC
-### 0x9 TCA0 SENT In Stream (2 values) <br/> 0xB TCB0 SENT In Stream (2 values) <br/> 0xD TCB1 SENT In Stream (2 values)
+### 0x9 TCA0 SENT In Stream (2 values) (FUTURE)<br/> 0xB TCB0 SENT In Stream (2 values) (FUTURE)<br/> 0xD TCB1 SENT In Stream (2 values) (FUTURE)
 * 12: Value1
 * 12: Value2
 * 8: CRC

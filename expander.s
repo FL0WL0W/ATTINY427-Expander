@@ -21,6 +21,7 @@
 #define index r14
 #define adcacc r15
 #define intgpr r16
+#define maingpr r17
 #define rxstate r25
 
 .data
@@ -223,11 +224,11 @@ __vector_17:
     MOV intgpr, rxstate
     LSL intgpr
     LDI ZL, lo8(RXStateSwitch)
-    LDI ZH, hi8(RXStateSwitch)
     ADD ZL, intgpr
-    ADC ZH, zero
     ; store char in intgpr before switch
     LDS intgpr, USART0_RXDATAL
+    LDI ZH, hi8(RXStateSwitch)
+    ADC ZH, zero
     IJMP ; 9 clock cycles to here
 
 RXStateSwitch:
@@ -394,6 +395,9 @@ RXSTORESETUPCRCCC:
     ADD rxcmd0, intgpr
     LDI intgpr, 10
     CPSE rxcmd0, intgpr
+    RETI
+    LDI intgpr, 1
+    MOV rxcmd0, intgpr
     LDI rxstate, 70
     RETI
 
@@ -414,9 +418,7 @@ NOTPROCESSINGFWDSETUP:
     ST Z, rxcmd4
     LDI intgpr, 16
     MOV rxcmd1, intgpr
-    IN intgpr, fwdready0
-    ORI intgpr, 0b00000010
-    OUT fwdready0, intgpr
+    SBI fwdready0, 1
     DEC rxstate
     RETI
 
@@ -450,9 +452,7 @@ RXFWD2:
     ST Z+, rxcmd3
     ST Z+, rxcmd4
     ST Z, intgpr
-    IN intgpr, fwdready0
-    ORI intgpr, 0b00000100
-    OUT fwdready0, intgpr
+    SBI fwdready0, 2
     ;reset state to 0
     LDI rxstate, 0
     RETI
@@ -471,9 +471,7 @@ RXFWD3:
     ST Z+, rxcmd3
     ST Z+, rxcmd4
     ST Z, intgpr
-    IN intgpr, fwdready0
-    ORI intgpr, 0b00001000
-    OUT fwdready0, intgpr
+    SBI fwdready0, 3
     ;reset state to 0
     LDI rxstate, 0
     RETI
@@ -487,7 +485,7 @@ RXCMDAnalogFwd:
 
 RXFWDANALOGLENGTH:
     MOV rxcmd1, intgpr
-    ; store command in fwd buffer 3
+    ; store command in fwd analog buffer
     LDI ZL, lo8(rxfwdanalogbuf)
     LDI ZH, hi8(rxfwdanalogbuf)
     SBIS fwdready0, 4
@@ -502,14 +500,12 @@ NOTPROCESSINGFWDANALOG:
     ST Z, rxcmd1
     INC rxcmd1
     INC rxcmd1
-    IN intgpr, fwdready0
-    ORI intgpr, 0b00010000
-    OUT fwdready0, intgpr
+    SBI fwdready0, 4
     DEC rxstate
     RETI
 
 RXFWDANALOG:
-    ; store command in fwd buffer 3
+    ; store command in fwd analog buffer
     LDI ZL, lo8(rxfwdanalogbuf)
     LDI ZH, hi8(rxfwdanalogbuf)
     SBRC rxcmd3, 0
@@ -537,9 +533,7 @@ RXFWD5:
     ST Z+, rxcmd3
     ST Z+, rxcmd4
     ST Z, intgpr
-    IN intgpr, fwdready0
-    ORI intgpr, 0b00100000
-    OUT fwdready0, intgpr
+    SBI fwdready0, 5
     ;reset state to 0
     LDI rxstate, 0
     RETI
@@ -557,9 +551,7 @@ RXFWD6:
     ST Z+, rxcmd3
     ST Z+, rxcmd4
     ST Z, intgpr
-    IN intgpr, fwdready0
-    ORI intgpr, 0b01000000
-    OUT fwdready0, intgpr
+    SBI fwdready0, 6
     ;reset state to 0
     LDI rxstate, 0
     RETI
@@ -570,16 +562,14 @@ RXCMDCheck7:
     RJMP RXCMDCHECKINDEX
 
 RXFWD7:
-    ; store command in fwd buffer 6
+    ; store command in fwd buffer 7
     LDI ZL, lo8(rxfwd7buf)
     LDI ZH, hi8(rxfwd7buf)
     ST Z+, rxcmd0
     ST Z+, rxcmd3
     ST Z+, rxcmd4
     ST Z, intgpr
-    IN intgpr, fwdready0
-    ORI intgpr, 0b10000000
-    OUT fwdready0, intgpr
+    SBI fwdready0, 7
     ;reset state to 0
     LDI rxstate, 0
     RETI
@@ -597,9 +587,7 @@ RXFWD8:
     ST Z+, rxcmd3
     ST Z+, rxcmd4
     ST Z, intgpr
-    IN intgpr, fwdready1
-    ORI intgpr, 0b00000001
-    OUT fwdready1, intgpr
+    SBI fwdready1, 0
     ;reset state to 0
     LDI rxstate, 0
     RETI
@@ -617,9 +605,7 @@ RXFWD9:
     ST Z+, rxcmd3
     ST Z+, rxcmd4
     ST Z, intgpr
-    IN intgpr, fwdready1
-    ORI intgpr, 0b00000010
-    OUT fwdready1, intgpr
+    SBI fwdready1, 1
     ;reset state to 0
     LDI rxstate, 0
     RETI
@@ -637,9 +623,7 @@ RXFWDA:
     ST Z+, rxcmd3
     ST Z+, rxcmd4
     ST Z, intgpr
-    IN intgpr, fwdready1
-    ORI intgpr, 0b00000100
-    OUT fwdready1, intgpr
+    SBI fwdready1, 2
     ;reset state to 0
     LDI rxstate, 0
     RETI
@@ -657,9 +641,7 @@ RXFWDB:
     ST Z+, rxcmd3
     ST Z+, rxcmd4
     ST Z, intgpr
-    IN intgpr, fwdready1
-    ORI intgpr, 0b00001000
-    OUT fwdready1, intgpr
+    SBI fwdready1, 3
     ;reset state to 0
     LDI rxstate, 0
     RETI
@@ -677,9 +659,7 @@ RXFWDC:
     ST Z+, rxcmd3
     ST Z+, rxcmd4
     ST Z, intgpr
-    IN intgpr, fwdready1
-    ORI intgpr, 0b00010000
-    OUT fwdready1, intgpr
+    SBI fwdready1, 4
     ;reset state to 0
     LDI rxstate, 0
     RETI
@@ -697,9 +677,7 @@ RXFWDD:
     ST Z+, rxcmd3
     ST Z+, rxcmd4
     ST Z, intgpr
-    IN intgpr, fwdready1
-    ORI intgpr, 0b00100000
-    OUT fwdready1, intgpr
+    SBI fwdready1, 5
     ;reset state to 0
     LDI rxstate, 0
     RETI
@@ -718,9 +696,7 @@ RXFWDE:
     ST Z+, rxcmd3
     ST Z+, rxcmd4
     ST Z, intgpr
-    IN intgpr, fwdready1
-    ORI intgpr, 0b01000000
-    OUT fwdready1, intgpr
+    SBI fwdready1, 6
     ;reset state to 0
     LDI rxstate, 0
     RETI
@@ -739,9 +715,7 @@ RXFWDF:
     ST Z+, rxcmd3
     ST Z+, rxcmd4
     ST Z, intgpr
-    IN intgpr, fwdready1
-    ORI intgpr, 0b10000000
-    OUT fwdready1, intgpr
+    SBI fwdready1, 7
     ;reset state to 0
     LDI rxstate, 0
     RETI
@@ -834,11 +808,41 @@ RXEXENOP:
     RETI
 
 RXEXESETUP:
+    ; stop ADC
+    STS ADC0_COMMAND, zero
+    ; turn off RTC
+    STS RTC_INTCTRL, zero
     LDI ZL, lo8(setupbuf)
     LDI ZH, hi8(setupbuf)
-    ; enable passthrough 0-3
+    ; setup TCA0
+    STS TCA0_SINGLE_CTRLA, zero
+    MOV intgpr, rxcmd1
+    ANDI intgpr, 0b00111000
+    CPSE intgpr, zero
+    RJMP RXEXESETUPTCA0
+RXEXESETUPTCA0END:
     LD rxcmd0, Z+
-    ; TODO
+    ; enable passthrough 0
+    SBRS rxcmd0, 0
+    RJMP RXEXESETUPNOPASS0
+    LDI intgpr, 0x1
+    STS EVSYS_USEREVSYSEVOUTB, intgpr
+RXEXESETUPNOPASS0:
+    ; enable passthrough 1
+    LDI intgpr, 0b01000001
+    SBRS rxcmd0, 1
+    LDI intgpr, 0b00000000
+    STS CCL_LUT3CTRLA, intgpr
+    ; enable passthrough 2
+    LDI intgpr, 0b01000001
+    SBRS rxcmd0, 2
+    LDI intgpr, 0b00000000
+    STS CCL_LUT0CTRLA, intgpr
+    ; enable passthrough 3
+    LDI intgpr, 0b01000001
+    SBRS rxcmd0, 3
+    LDI intgpr, 0b00000000
+    STS AC0_CTRLA, intgpr
     ; store index
     MOV intgpr, rxcmd0
     ANDI intgpr, 0b11110000
@@ -854,31 +858,126 @@ RXEXESETUP:
     ; set ADC Sample Duration
     LD intgpr, Z+
     STS ADC0_CTRLE, intgpr
-    ; store analog enable1
+    ; store analog enable
+    LD rxcmd3, Z+
     LD intgpr, Z+
-    OUT analogenable1, intgpr
+    MOV rxcmd1, intgpr
+    ANDI intgpr, 0b11111110
+    OUT analogenable0, intgpr
+    OUT analogenable1, rxcmd3
+    MOV rxcmd4, intgpr
     ; set digital period
-    LD rxcmd0, Z+
-    MOV intgpr, rxcmd0
+    MOV intgpr, rxcmd1
     ANDI intgpr, 0b00000001
     STS RTC_PERH, intgpr
     LD intgpr, Z+
     STS RTC_PERL, intgpr
-    ; set analog enable0
-    MOV intgpr, rxcmd0
-    ANDI intgpr, 0b11111110
-    OUT analogenable0, intgpr
-    ; setup TCA0
-    LD rxcmd0, Z+
-    LD rxcmd1, Z+
-    ; TODO
     ; setup TCB0
-    LD rxcmd0, Z+
     LD rxcmd1, Z+
-    ; TODO
+    LD rxcmd2, Z+
+    STS TCB0_CTRLA, zero
+    MOV intgpr, rxcmd1
+    ANDI intgpr, 0b00111000
+    CPSE intgpr, zero
+    RJMP RXEXESETUPTCB0
+RXEXESETUPTCB0END:
     ; setup TCB1
-    ; TODO
+    LD rxcmd1, Z+
+    LD rxcmd2, Z+
+    STS TCB1_CTRLA, zero
+    MOV intgpr, rxcmd1
+    ANDI intgpr, 0b00111000
+    CPSE intgpr, zero
+    RJMP RXEXESETUPTCB1
+RXEXESETUPTCB1END:
+    ; turn on RTC
+    LDI intgpr, 0b00010001
+    STS RTC_INTCTRL, zero
+    ; Start ADC if any ADC pin is enabled, temporarily stored in rxcmd3/4
+    CPSE rxcmd3, zero
+    STS ADC0_COMMAND, intgpr
+    CPSE rxcmd4, zero
+    STS ADC0_COMMAND, intgpr
     RETI
+
+RXEXESETUPTCA0:
+    MOV rxcmd0, intgpr
+    LDI intgpr, 0b00100000
+    ; for now only supporting OUTPUT on TCA. return if set as input
+    CPSE rxcmd0, intgpr
+    RJMP RXEXESETUPTCA0END
+    ; set portmux
+    STS PORTMUX_TCAROUTEA, rxcmd2
+    ; set outputs
+    MOV intgpr, rxcmd2
+    ANDI intgpr, 0b11110000
+    ORI intgpr, 0x3
+    STS TCA0_SINGLE_CTRLB, intgpr
+    ; TODO
+    ; set clksel and enable
+    MOV intgpr, rxcmd1
+    SEC
+    ROL intgpr
+    ANDI intgpr, 0b00001111
+    STS TCA0_SINGLE_CTRLA, intgpr
+    RJMP RXEXESETUPTCA0END
+
+RXEXESETUPTCB0:
+    MOV rxcmd0, intgpr
+    LDI intgpr, 0b00100000
+    CPSE rxcmd0, intgpr
+    RJMP RXEXESETUPTCB0INPUT
+    ; set portmux
+    lsl rxcmd2
+    STS PORTMUX_TCBROUTEA, rxcmd2
+    ; TODO
+    ; set clksel and enable
+    MOV intgpr, rxcmd1
+    SEC
+    ROL intgpr
+    ANDI intgpr, 0b00001111
+    STS TCB0_CTRLA, intgpr
+    RJMP RXEXESETUPTCB0END
+
+RXEXESETUPTCB0INPUT:
+    ; TODO
+    ; set clksel and enable
+    MOV intgpr, rxcmd1
+    SEC
+    ROL intgpr
+    ANDI intgpr, 0b00001111
+    STS TCB0_CTRLA, intgpr
+    RJMP RXEXESETUPTCB0END
+
+RXEXESETUPTCB1:
+    MOV rxcmd0, intgpr
+    LDI intgpr, 0b00100000
+    CPSE rxcmd0, intgpr
+    RJMP RXEXESETUPTCB1INPUT
+    ; set portmux
+    MOV intgpr, rxcmd2
+    ANDI intgpr, 0b00000001
+    LDS rxcmd2, PORTMUX_TCBROUTEA
+    OR rxcmd2, intgpr
+    STS PORTMUX_TCBROUTEA, rxcmd2
+    ; TODO
+    ; set clksel and enable
+    MOV intgpr, rxcmd1
+    SEC
+    ROL intgpr
+    ANDI intgpr, 0b00001111
+    STS TCB1_CTRLA, rxcmd1
+    RJMP RXEXESETUPTCB1END
+
+RXEXESETUPTCB1INPUT:
+    ; TODO
+    ; set clksel and enable
+    MOV intgpr, rxcmd1
+    SEC
+    ROL intgpr
+    ANDI intgpr, 0b00001111
+    STS TCB1_CTRLA, rxcmd1
+    RJMP RXEXESETUPTCB1END
 
 RXEXEGPIODIRECTION:
 	out VPORTA_DIR, rxcmd2
@@ -957,15 +1056,62 @@ RXCALCCRCCC:
 
 .global main
 main:
-    ;initialize
-    LDI intgpr, 0
-    MOV zero, intgpr
+    ; initialize
+    LDI maingpr, 0
+    MOV zero, maingpr
     MOV rxstate, zero
     MOV index, zero
     OUT fwdready0, zero
     OUT fwdready1, zero
     MOV nopfwdcnt, zero
-	RJMP main
+    ; initialize RTC
+    LDI maingpr, 0b00000001
+    STS RTC_CTRLA, maingpr
+    ; initialize ADC
+    LDI maingpr, 0b00100001
+    STS ADC0_CTRLA, maingpr
+    STS ADC0_CTRLB, maingpr
+    LDI maingpr, 0b10101001
+    STS ADC0_CTRLC, maingpr
+    LDI maingpr, 0b00000010
+    STS ADC0_INTCTRL, maingpr
+    ; initialize TCA0
+    LDI maingpr, 0b00000011
+    STS TCA0_SINGLE_CTRLESET, maingpr
+    ; initialize passthrough
+    ; passthrough 0
+
+    ; passthrough 1
+    LDI maingpr, 0b00000001
+    STS CCL_CTRLA, maingpr
+    LDI maingpr, 0x5
+    STS CCL_LUT3CTRLC, maingpr
+    LDI maingpr, 0b00001111
+    STS CCL_TRUTH3, maingpr
+    ; passthrough 2
+    LDI maingpr, 0x5
+    STS CCL_LUT0CTRLB, maingpr
+    LDI maingpr, 0b01010101
+    STS CCL_TRUTH0, maingpr
+    LDI maingpr, 0b00000001
+    STS PORTMUX_CCLROUTEA, maingpr
+    ; passthrough 3
+    LDI maingpr, 0b10011011
+    STS AC0_MUXCTRLA, maingpr
+    LDI maingpr, 84
+    STS AC0_DACREF, maingpr
+    LDI maingpr, 0x7
+    STS VREF_CTRLA, maingpr
+    ; passthrough 4
+    ; passthrough 5
+    LDI maingpr, 0x3
+    STS CCL_LUT2CTRLB, maingpr
+    LDI maingpr, 0b01010101
+    STS CCL_TRUTH0, maingpr
+
+
+mainloop:
+	RJMP mainloop
 .end
 
 ; interrupt vectors
