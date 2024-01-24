@@ -232,86 +232,86 @@ __vector_17:
     IJMP ; 9 clock cycles to here
 
 RXStateSwitch:
-    .int RXCMD             ; 0
-    .int RXFWD2            ; 1
-    .int RXSTORECMD4       ; 2
-    .int RXSTORECMD3       ; 3
-    .int RXSTORECMD2       ; 4
-    .int DECSTATE          ; 5
-    .int RXFWD3            ; 6
-    .int RXSTORECMD4       ; 7
-    .int RXSTORECMD3       ; 8
-    .int RXSTORECMD2       ; 9
-    .int DECSTATE          ; 10
-    .int RXFWD5            ; 11
-    .int RXSTORECMD4       ; 12
-    .int RXSTORECMD3       ; 13
-    .int DECSTATE          ; 14
-    .int DECSTATE          ; 15
-    .int RXFWD6            ; 16
-    .int RXSTORECMD4       ; 17
-    .int RXSTORECMD3       ; 18
-    .int DECSTATE          ; 19
-    .int DECSTATE          ; 20
-    .int RXFWD7            ; 21
-    .int RXSTORECMD4       ; 22
-    .int RXSTORECMD3       ; 23
-    .int DECSTATE          ; 24
-    .int DECSTATE          ; 25
-    .int RXFWD8            ; 26
-    .int RXSTORECMD4       ; 27
-    .int RXSTORECMD3       ; 28
-    .int DECSTATE          ; 29
-    .int DECSTATE          ; 30
-    .int RXFWD9            ; 31
-    .int RXSTORECMD4       ; 32
-    .int RXSTORECMD3       ; 33
-    .int RXSTORECMD2       ; 34
-    .int DECSTATE          ; 35
-    .int RXFWDA            ; 36
-    .int RXSTORECMD4       ; 37
-    .int RXSTORECMD3       ; 38
-    .int DECSTATE          ; 39
-    .int DECSTATE          ; 40
-    .int RXFWDB            ; 41
-    .int RXSTORECMD4       ; 42
-    .int RXSTORECMD3       ; 43
-    .int RXSTORECMD2       ; 44
-    .int DECSTATE          ; 45
-    .int RXFWDC            ; 46
-    .int RXSTORECMD4       ; 47
-    .int RXSTORECMD3       ; 48
-    .int RXSTORECMD2       ; 49
-    .int DECSTATE          ; 50
-    .int RXFWDD            ; 51
-    .int RXSTORECMD4       ; 52
-    .int RXSTORECMD3       ; 53
-    .int RXSTORECMD2       ; 54
-    .int DECSTATE          ; 55
-    .int RXFWDE            ; 56
-    .int RXSTORECMD4       ; 57
-    .int RXSTORECMD3       ; 58
-    .int RXSTORECMD2       ; 59
-    .int RXSTORECMD1       ; 60
-    .int RXFWDF            ; 61
-    .int RXSTORECMD4       ; 62
-    .int RXSTORECMD3       ; 63
-    .int RXSTORECMD2       ; 64
-    .int RXSTORECMD1       ; 65
-    .int RXEXE             ; 66
-    .int RXSTOREEXECMD4    ; 67
-    .int RXSTOREEXECMD3    ; 68
-    .int RXSTOREEXECMD2    ; 69
-    .int RXSTOREEXECMD1    ; 70
-    .int RXFWDANALOG       ; 71
-    .int RXFWDANALOGLENGTH ; 72
-    .int RXFWDSETUP        ; 73
-    .int RXFWDSETUPSTORE1  ; 74
-    .int RXSTORESETUP      ; 75
-    .int RXSTOREEXECMD4    ; 76
-    .int RXSTOREEXECMD3    ; 77
-    .int RXSTOREEXECMD2    ; 78
-    .int RXSTOREEXECMD1    ; 79
+    .short RXCMD             ; 0
+    .short RXFWD2            ; 1
+    .short RXSTORECMD4       ; 2
+    .short RXSTORECMD3       ; 3
+    .short RXSTORECMD2       ; 4
+    .short DECSTATE          ; 5
+    .short RXFWD3            ; 6
+    .short RXSTORECMD4       ; 7
+    .short RXSTORECMD3       ; 8
+    .short RXSTORECMD2       ; 9
+    .short DECSTATE          ; 10
+    .short RXFWD5            ; 11
+    .short RXSTORECMD4       ; 12
+    .short RXSTORECMD3       ; 13
+    .short DECSTATE          ; 14
+    .short DECSTATE          ; 15
+    .short RXFWD6            ; 16
+    .short RXSTORECMD4       ; 17
+    .short RXSTORECMD3       ; 18
+    .short DECSTATE          ; 19
+    .short DECSTATE          ; 20
+    .short RXFWD7            ; 21
+    .short RXSTORECMD4       ; 22
+    .short RXSTORECMD3       ; 23
+    .short DECSTATE          ; 24
+    .short DECSTATE          ; 25
+    .short RXFWD8            ; 26
+    .short RXSTORECMD4       ; 27
+    .short RXSTORECMD3       ; 28
+    .short DECSTATE          ; 29
+    .short DECSTATE          ; 30
+    .short RXFWD9            ; 31
+    .short RXSTORECMD4       ; 32
+    .short RXSTORECMD3       ; 33
+    .short RXSTORECMD2       ; 34
+    .short DECSTATE          ; 35
+    .short RXFWDA            ; 36
+    .short RXSTORECMD4       ; 37
+    .short RXSTORECMD3       ; 38
+    .short DECSTATE          ; 39
+    .short DECSTATE          ; 40
+    .short RXFWDB            ; 41
+    .short RXSTORECMD4       ; 42
+    .short RXSTORECMD3       ; 43
+    .short RXSTORECMD2       ; 44
+    .short DECSTATE          ; 45
+    .short RXFWDC            ; 46
+    .short RXSTORECMD4       ; 47
+    .short RXSTORECMD3       ; 48
+    .short RXSTORECMD2       ; 49
+    .short DECSTATE          ; 50
+    .short RXFWDD            ; 51
+    .short RXSTORECMD4       ; 52
+    .short RXSTORECMD3       ; 53
+    .short RXSTORECMD2       ; 54
+    .short DECSTATE          ; 55
+    .short RXFWDE            ; 56
+    .short RXSTORECMD4       ; 57
+    .short RXSTORECMD3       ; 58
+    .short RXSTORECMD2       ; 59
+    .short RXSTORECMD1       ; 60
+    .short RXFWDF            ; 61
+    .short RXSTORECMD4       ; 62
+    .short RXSTORECMD3       ; 63
+    .short RXSTORECMD2       ; 64
+    .short RXSTORECMD1       ; 65
+    .short RXEXE             ; 66
+    .short RXSTOREEXECMD4    ; 67
+    .short RXSTOREEXECMD3    ; 68
+    .short RXSTOREEXECMD2    ; 69
+    .short RXSTOREEXECMD1    ; 70
+    .short RXFWDANALOG       ; 71
+    .short RXFWDANALOGLENGTH ; 72
+    .short RXFWDSETUP        ; 73
+    .short RXFWDSETUPSTORE1  ; 74
+    .short RXSTORESETUP      ; 75
+    .short RXSTOREEXECMD4    ; 76
+    .short RXSTOREEXECMD3    ; 77
+    .short RXSTOREEXECMD2    ; 78
+    .short RXSTOREEXECMD1    ; 79
 
 DECSTATE:
     DEC rxstate
@@ -331,22 +331,22 @@ RXCMD:
     IJMP ; 18 clock cycles to here
 
 RXCMDSwitch:
-    .int RXNOPFwd
-    .int RXCMDSetup
-    .int RXCMDCheck2
-    .int RXCMDCheck3
-    .int RXCMDAnalogFwd
-    .int RXCMDCheck5
-    .int RXCMDCheck6
-    .int RXCMDCheck7
-    .int RXCMDCheck8
-    .int RXCMDFwd9
-    .int RXCMDCheckA
-    .int RXCMDFwdB
-    .int RXCMDCheckC
-    .int RXCMDFwdD
-    .int RXCMDFwdE
-    .int RXCMDFwdF
+    .short RXNOPFwd
+    .short RXCMDSetup
+    .short RXCMDCheck2
+    .short RXCMDCheck3
+    .short RXCMDAnalogFwd
+    .short RXCMDCheck5
+    .short RXCMDCheck6
+    .short RXCMDCheck7
+    .short RXCMDCheck8
+    .short RXCMDFwd9
+    .short RXCMDCheckA
+    .short RXCMDFwdB
+    .short RXCMDCheckC
+    .short RXCMDFwdD
+    .short RXCMDFwdE
+    .short RXCMDFwdF
 
 RXNOPFwd:
     INC nopfwdcnt
@@ -869,9 +869,9 @@ RXEXESETUPNOPASS0:
     ; set digital period
     MOV intgpr, rxcmd1
     ANDI intgpr, 0b00000001
+    LD rxcmd0, Z+
+    STS RTC_PERL, rxcmd0
     STS RTC_PERH, intgpr
-    LD intgpr, Z+
-    STS RTC_PERL, intgpr
     ; setup TCB0
     LD rxcmd1, Z+
     LD rxcmd2, Z+
@@ -913,7 +913,6 @@ RXEXESETUPTCA0:
     ANDI intgpr, 0b11110000
     ORI intgpr, 0x3
     STS TCA0_SINGLE_CTRLB, intgpr
-    ; TODO
     ; set clksel and enable
     MOV intgpr, rxcmd1
     SEC
@@ -1075,6 +1074,15 @@ main:
     STS ADC0_CTRLC, maingpr
     LDI maingpr, 0b00000010
     STS ADC0_INTCTRL, maingpr
+    ; initialize UART
+    LDI maingpr, 0b10000000
+    STS USART0_CTRLA, maingpr
+    LDI maingpr, 0b10000010
+    STS USART0_CTRLB, maingpr
+    LDI maingpr, 0x3
+    STS USART0_CTRLC, maingpr
+    LDI maingpr, 64
+    STS USART0_BAUD, maingpr
     ; initialize TCA0
     LDI maingpr, 0b00000011
     STS TCA0_SINGLE_CTRLESET, maingpr
@@ -1107,7 +1115,7 @@ main:
     LDI maingpr, 0x3
     STS CCL_LUT2CTRLB, maingpr
     LDI maingpr, 0b01010101
-    STS CCL_TRUTH0, maingpr
+    STS CCL_TRUTH2, maingpr
 
 
 mainloop:
