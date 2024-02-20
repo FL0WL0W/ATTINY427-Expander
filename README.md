@@ -1,90 +1,22 @@
 # ATTiny427 Expander
-This project is to create a GPIO expander that takes and sends commands over UART connection. 
-Up to 16 of these expanders can be daisy chained, only limited by the bandwidth of the maximum 2.5Mhz UART. 
-This also adds 4 inverted passthrough connection paths so that the ATTiny output buffers can be used.
+This project is to create a GPIO expander that takes read and write commands over SPI.
 
-# Commands
-### Header
-* 4: Index
-* 4: Command
-### 0x0 NOP
-### 0x1 Setup
-* 4: Index Assignment
-* 1: PC5 -> PB7 inverted passthrough
-* 1: PC2 -> PC4 inverted passthrough
-* 1: PA0 -> PB4 inverted passthrough
-* 1: PB6 -> PA5 inverted passthrough
+### Command Byte
+* 1: Write bit 1 = write | 0 = read
+* 1: Address size bit 1 = 8 bit address | 0 = 16 bit address
+* 1: Address high bit set zero 1 = set address high to zero | 0 = reuse previous address high
+* 5: read/write length
 
-* 1: PC4 -> PC2 inverted passthrough
-* 1: PA5 -> PB6 inverted passthrough
-* 2: Reserved
-* 4: ADC Accumulate
+### Write Command
+The address is also read out before it is written
+        |        Write 3 bytes with 16 bit address        |             Write 2 bytes with 8 bit address              |
+        |  0x83   |  0x--   |  0x--   |  0x--   |  0x--   |  0x--   |  0xC2   |  0x--   |  0x--   |  0x--   |  0x--   |
+Write:  | Command | Address | Address |  Write  |  Write  |  Write  | Command | Address |  Write  |  Write  |   N/A   |
+Read:   |   N/A   |   N/A   |   N/A   |   N/A   |  Read   |  Read   |  Read   |   N/A   |   N/A   |  Read   |  Read   |
 
-* 8: ADC Sample Duration
-
-* 15: Analog In x Enable
-* 9: Digital Input Stream Period (1/32768s, 0=disabled)
-
-* 3: TCB0 CLK
-* 3: TCB0 (Off,PW,Frequency,PW&Frequency,OUTPUT,SENT_First,SENT_Second,SENT_First&Second)
-* 2: TCB0 Input Port (PORTA, PORTB, PORTC, RESERVED)
-
-* 8: TCB0 PinMask
-
-* 3: TCB1 CLK
-* 3: TCB1 (Off,PW,Frequency,PW&Frequency,OUTPUT,SENT_First,SENT_Second,SENT_First&Second)
-* 2: TCB1 Input Port (PORTA, PORTB, PORTC, RESERVED)
-
-* 8: TCB1 PinMask
-
-* 3: TCA0 CLK
-* 3: TCA0 (Off,PW,RESERVED,RESERVED,OUTPUT,SENT_First,SENT_Second,SENT_First&Second)
-* 2: TCA0 Input Port (PORTA, PORTB, PORTC, RESERVED)
-
-* 8: TCA0 PinMask
-
-* 16: Reserved
-
-* 8: CRC
-### 0x2 GPIO Direction
-* 8: DIRECTIONA
-* 8: DIRECTIONB
-* 8: DIRECTIONC
-* 8: CRC
-### 0x3 GPIO In Stream
-* 8: INA
-* 8: INB
-* 8: INC
-* 8: CRC
-### 0x3 GPIO Out
-* 8: OUTA
-* 8: OUTB
-* 8: OUTC
-* 8: CRC
-### 0x4 Analog In Stream
-* 8: Byte Length
-* 16: Analog Value x
-* ...
-* 8: CRC
-### 0x5 TCA0 PulseWidth Out 0 <br/> 0x6 TCA0 PulseWidth Out 1 <br/> 0x7 TCA0 PulseWidth Out 2 <br/> 0x8 TCA0 PulseWidth In Stream (FUTURE) <br/> 0xA TCB0 PulseWidth In Stream <br/> 0xC TCB1 PulseWidth In Stream
-* 16: Pulsewidth
-* 8: CRC
-### 0x8 TCA0 Period Out <br/> 0xA TCB0 Period In Stream <br/> 0xC TCB1 Period In Stream
-* 16: Period
-* 8: CRC
-### 0x8 TCA0 SENT In Stream (1 value) (FUTURE)<br/> 0xA TCB0 SENT In Stream (1 value) (FUTURE)<br/> 0xC TCB1 SENT In Stream (1 value) (FUTURE)
-* 12: Value
-* 4: Reserved
-* 8: CRC
-### 0x9 TCA0 SENT In Stream (2 values) (FUTURE)<br/> 0xB TCB0 SENT In Stream (2 values) (FUTURE)<br/> 0xD TCB1 SENT In Stream (2 values) (FUTURE)
-* 12: Value1
-* 12: Value2
-* 8: CRC
-### 0xE TCB0 Pulsewidth and Period In Stream <br/> 0xF TCB0 Pulsewidth and Period In Stream
-* 16: Pulsewidth
-* 16: Period
-* 8: CRC
-### 0xA TCB0 Pulsewidth and Period OUT <br/> 0xC TCB1 Pulsewidth and Period OUT
-* 8: Pulsewidth
-* 8: Period
-* 8: CRC
+### Read Command
+A command can be sent during the last pad byte of the read command
+        |        Read 3 bytes with 16 bit address         |         Read 2 bytes with 8 bit address         |
+        |  0x03   |  0x--   |  0x--   |  0x--   |  0x--   |  0x62   |  0x--   |  0x--   |  0x--   |  0x--   |
+Write:  | Command | Address | Address |   N/A   |   N/A   | Command | Address |   N/A   |   N/A   |   N/A   |
+Read:   |   N/A   |   N/A   |   N/A   |   N/A   |  Read   |  Read   |  Read   |   N/A   |  Read   |  Read   |
