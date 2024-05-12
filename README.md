@@ -10,7 +10,8 @@ The maximum SPI frequency is 5mhz.
 
 ### Write Command
 The address is also read out before it is written
-```        |        Write 3 bytes with 16 bit address        |             Write 2 bytes with 8 bit address              |
+```
+        |        Write 3 bytes with 16 bit address        |             Write 2 bytes with 8 bit address              |
         |  0x83   |  0x--   |  0x--   |  0x--   |  0x--   |  0x--   |  0xC2   |  0x--   |  0x--   |  0x--   |  0x--   |
 MOSI:   | Command | Address | Address |  Write  |  Write  |  Write  | Command | Address |  Write  |  Write  |   N/A   |   N/A   |
 MISO:   |   N/A   |   N/A   |   N/A   |   N/A   |   N/A   |  Read   |  Read   |  Read   |   N/A   |   N/A   |  Read   |  Read   |
@@ -18,8 +19,12 @@ MISO:   |   N/A   |   N/A   |   N/A   |   N/A   |   N/A   |  Read   |  Read   | 
 
 ### Read Command
 A command can be sent during the last pad byte of the read command
-```        |        Read 3 bytes with 16 bit address         |         Read 2 bytes with 8 bit address         |
+```
+        |        Read 3 bytes with 16 bit address         |         Read 2 bytes with 8 bit address         |
         |  0x03   |  0x--   |  0x--   |  0x--   |  0x--   |  0x62   |  0x--   |  0x--   |  0x--   |  0x--   |
 MOSI:   | Command | Address | Address |   N/A   |   N/A   | Command | Address |   N/A   |   N/A   |   N/A   |   N/A   |
 MISO:   |   N/A   |   N/A   |   N/A   |   N/A   |   N/A   |  Read   |  Read   |  Read   |   N/A   |  Read   |  Read   |
 ```
+### Troubleshootin
+#### No response
+        If writing to the PORT_DIR register. make sure the MISO line is set as output. MISO is PA2 or PC1 if using alternate SPI

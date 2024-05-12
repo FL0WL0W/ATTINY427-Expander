@@ -23,13 +23,13 @@ tcb0val:
     .short 0
     .short 0
 gpioina:
-    .byte
+    .byte 
 gpioinb:
-    .byte
+    .byte 
 gpioinc:
-    .byte
+    .byte 
 adccnt:
-    .byte
+    .byte 
 adcval:
     .short 0
     .short 0
@@ -278,8 +278,8 @@ SPIREADADDRH:
     OUT CPU_SREG, spiSREG
     RETI
 
-.global ADC0_SAMPRDY_vect
-ADC0_SAMPRDY_vect:
+.global ADC0_RESRDY_vect
+ADC0_RESRDY_vect:
     IN adcSREG, CPU_SREG
     LDS adcgpr0, ADC0_MUXPOS
     ; * (2+2)
@@ -474,12 +474,19 @@ main:
 #if defined(SPI_ALT)
     LDI maingpr, 0b00000001
     STS PORTMUX_SPIROUTEA, maingpr
+    LDI maingpr, 0b00000010
+    STS PORTC_DIRSET, maingpr
+#else
+    LDI maingpr, 0b00000100
+    STS PORTA_DIRSET, maingpr
 #endif
     LDI maingpr, 0b00000001
     STS SPI0_CTRLA, maingpr
     LDI maingpr, 0b10000000
     STS SPI0_CTRLB, maingpr
     STS SPI0_INTCTRL, maingpr
+    LDI maingpr, SPI0_INT_vect_num
+    STS CPUINT_LVL1VEC, maingpr
     SEI
 mainloop:
     IN maingpr, VPORTA_IN
