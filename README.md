@@ -25,6 +25,6 @@ A command can be sent during the last pad byte of the read command
 MOSI:   | Command | Address | Address |   N/A   |   N/A   | Command | Address |   N/A   |   N/A   |   N/A   |   N/A   |
 MISO:   |   N/A   |   N/A   |   N/A   |   N/A   |   N/A   |  Read   |  Read   |  Read   |   N/A   |  Read   |  Read   |
 ```
-### Troubleshootin
+### Troubleshooting
 #### No response
         If writing to the PORT_DIR register. make sure the MISO line is set as output. MISO is PA2 or PC1 if using alternate SPI
