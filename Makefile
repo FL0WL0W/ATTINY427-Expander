@@ -446,6 +446,9 @@ gccversion :
 program: $(TARGET).bin $(TARGET).eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 
+flash: $(TARGET).bin
+	@curl --data-binary @$(TARGET).bin http://192.168.4.1/upload/attiny/1
+
 
 # Generate avr-gdb config/init file which does the following:
 #     define the reset signal, load the target file, connect to target, and set 

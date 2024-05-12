@@ -219,7 +219,7 @@ adcbuff:
 SPI0_INT_vect:
     IN spiSREG, CPU_SREG
     CP spilen, zero
-    BREQ SPIREADLEN
+    BREQ SPIREADLENECHO
     SBRS spistate, 4
     RJMP SPIREADADDR
     SBRC spistate, 7
@@ -251,18 +251,29 @@ SPIREADLEN:
     OUT CPU_SREG, spiSREG
     RETI
 
+SPIREADLENECHO:
+    LDS spilen, SPI0_DATA
+    STS SPI0_DATA, spilen
+    MOV spistate, spilen
+    ANDI spilen, 0b00011111
+    ANDI spistate, 0b11100000
+    OUT CPU_SREG, spiSREG
+    RETI
+
 SPIREADADDR:
     SBRS spistate, 5
     RJMP SPIREADADDRH
     SBRC spistate, 6
     MOV XH, zero
     LDS XL, SPI0_DATA
+    STS SPI0_DATA, XL
     ORI spistate, 0b00010000
     OUT CPU_SREG, spiSREG
     RETI
 
 SPIREADADDRH:
     LDS XH, SPI0_DATA
+    STS SPI0_DATA, XH
     ORI spistate, 0b00100000
     OUT CPU_SREG, spiSREG
     RETI
@@ -455,6 +466,10 @@ main:
     MOV adcstate, zero
     MOV spilen, zero
     MOV spistate, zero
+    ; initialize clock
+    LDI maingpr, 0xD8
+    OUT CCP, maingpr
+    STS CLKCTRL_MCLKCTRLB, zero
     ; initialize SPI
 #if defined(SPI_ALT)
     LDI maingpr, 0b00000001
@@ -462,9 +477,8 @@ main:
 #endif
     LDI maingpr, 0b00000001
     STS SPI0_CTRLA, maingpr
-    LDI maingpr, 0b00000000
+    LDI maingpr, 0b10000000
     STS SPI0_CTRLB, maingpr
-    LDI maingpr, 0b10000001
     STS SPI0_INTCTRL, maingpr
     SEI
 mainloop:
