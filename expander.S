@@ -261,9 +261,9 @@ SPIREADLENECHO:
     RETI
 
 SPIREADADDR:
-    SBRS spistate, 5
+    SBRS spistate, 6
     RJMP SPIREADADDRH
-    SBRC spistate, 6
+    SBRC spistate, 5
     MOV XH, zero
     LDS XL, SPI0_DATA
     STS SPI0_DATA, XL
@@ -274,7 +274,7 @@ SPIREADADDR:
 SPIREADADDRH:
     LDS XH, SPI0_DATA
     STS SPI0_DATA, XH
-    ORI spistate, 0b00100000
+    ORI spistate, 0b01000000
     OUT CPU_SREG, spiSREG
     RETI
 
