@@ -1,6 +1,6 @@
 # ATTiny427 Expander
 This project is to create a GPIO expander that takes read and write commands over SPI.</br>
-The maximum SPI frequency is 5mhz.
+The maximum SPI frequency is 2.5mhz.
 
 ## Command Byte
 * 1: Write bit 1 = write | 0 = read
