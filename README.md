@@ -32,7 +32,7 @@ To setup anlog pin reader. send this command
 0x1C //address low
 0xE0 //enable analog pins 5-7
 0x01 //analog enable pins 8, 10-15
-0x0F // analog accumulate to 16 bits
+0x8F // analog accumulate to 16 bits and reset accumulator
 ```
 Setup and start the ADC
 ```
