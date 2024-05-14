@@ -2,18 +2,19 @@
  
 #define analogenable0 GPIO_GPIOR0
 #define analogenable1 GPIO_GPIOR1
-#define zero r0
-#define spiSREG r1
+#define analogaccumulate GPIO_GPIOR2
+#define zero r2
+#define spiSREG r3
 #define spistate r16
 #define spilen r17
 #define spigpr r18
-#define adcSREG r2
-#define adcacc r3
-#define adcstate r5
-#define adcgpr0 r19
-#define adcgpr1 r20
-#define adcgpr2 r21
-#define maingpr r22
+#define adcSREG r4
+#define adcacc r5
+#define adcstate r19
+#define adcgpr0 r20
+#define adcgpr1 r21
+#define adcgpr2 r23
+#define maingpr r24
 
 .data
 tcb1val:
@@ -23,13 +24,13 @@ tcb0val:
     .short 0
     .short 0
 gpioina:
-    .byte 
+    .byte 0
 gpioinb:
-    .byte 
+    .byte 0
 gpioinc:
-    .byte 
+    .byte 0
 adccnt:
-    .byte 
+    .byte 0
 adcval:
     .short 0
     .short 0
@@ -43,6 +44,23 @@ adcval:
     .short 0
     .short 0
 adcbuff:
+    .short 0
+    .short 0
+    .short 0
+    .short 0
+    .short 0
+    .short 0
+    .short 0
+    .short 0
+    .short 0
+    .short 0
+    .short 0
+    .short 0
+    .short 0
+    .short 0
+    .short 0
+    .short 0
+    .short 0
     .short 0
     .short 0
     .short 0
@@ -284,9 +302,8 @@ ADC0_RESRDY_vect:
     LDS adcgpr0, ADC0_MUXPOS
     ; * (2+2)
     LSL adcgpr0
-    LSL adcgpr0
-    LDI ZL, lo8(ADC0SETSAMPLE)
-    LDI ZH, hi8(ADC0SETSAMPLE)
+    LDI ZH, hi8(gs(ADC0SETSAMPLE))
+    LDI ZL, lo8(gs(ADC0SETSAMPLE))
     ADD ZL, adcgpr0
     ADC ZH, zero
     IJMP
@@ -301,10 +318,10 @@ ADC0SETSAMPLEBEGIN:
     SBIC analogenable0, 3
     RJMP ADC0SETSAMPLE3
     SBIC analogenable0, 4
+    RJMP ADC0SETSAMPLE4
 #if defined(SPI_ALT)
 ADC0SETSAMPLEBEGIN:
 #endif
-    RJMP ADC0SETSAMPLE4
     SBIC analogenable0, 5
     RJMP ADC0SETSAMPLE5
     SBIC analogenable0, 6
@@ -329,16 +346,13 @@ ADC0SETSAMPLEBEGIN:
     SBIC analogenable1, 7
     RJMP ADC0SETSAMPLE15
 #endif
-    MOV adcstate, zero
-    INC adcacc
-    MOV adcgpr1, adcacc
+    ORI adcstate, 0b10000000
+    IN adcgpr1, analogaccumulate
     MOV adcgpr2, adcacc
-    SWAP adcgpr2
-    ANDI adcgpr1, 0b11110000
-    ANDI adcgpr2, 0b11110000
+    INC adcacc
     CPSE adcgpr1, adcgpr2
     RJMP ADC0SETSAMPLEBEGIN
-    MOV adcacc, adcgpr1
+    MOV adcacc, zero
     RJMP ADC0SETSAMPLEBEGIN
 ADC0SETSAMPLE1:
     LDI adcgpr0, 1
@@ -386,6 +400,12 @@ ADC0SETSAMPLE15:
     LDI adcgpr0, 15
 
 ADC0STARTSAMPLE:
+    ; r0/r1 = (adcstate & 0x0F) * 17
+    MOV adcgpr1, adcstate
+    ANDI adcgpr1, 0x0F
+    LDI adcgpr2, 17
+    MUL adcgpr2, adcgpr1
+
     STS ADC0_MUXPOS, adcgpr0
     LDS adcgpr0, ADC0_RESULT0
     LDS adcgpr1, ADC0_RESULT1
@@ -393,16 +413,11 @@ ADC0STARTSAMPLE:
     STS ADC0_COMMAND, adcgpr2
 
     ; Z = adcbuff
-    LDI ZL, lo8(adcbuff)
     LDI ZH, hi8(adcbuff)
-    ADD ZL, adcgpr2
-    ADC ZH, zero
-    ; Z + adcstate * 16
-    LDI adcgpr2, 16
-    MUL adcgpr2, adcstate
-    ADC ZH, zero
-    ADD ZL, adcgpr2
-    ADC ZH, zero
+    LDI ZL, lo8(adcbuff)
+    ; Z + r0/r1
+    ADD ZL, r0
+    ADC ZH, r1
     ; Z + adcacc * 2
     MOV adcgpr2, adcacc
     ANDI adcgpr2, 0b0001111
@@ -419,8 +434,8 @@ ADC0STARTSAMPLE:
     SBC adcgpr1, adcgpr2
 
     ; Z = adcval
-    LDI ZL, lo8(adcval)
     LDI ZH, hi8(adcval)
+    LDI ZL, lo8(adcval)
     ADD ZL, adcstate
     ADC ZH, zero
 
@@ -456,6 +471,11 @@ ADC0HIGHCHECK:
 
     INC adcstate
     INC adcstate
+
+    SBRC adcstate, 7
+    MOV adcstate, zero
+
+    OUT CPU_SREG, adcSREG
     RETI
 
 .global main
