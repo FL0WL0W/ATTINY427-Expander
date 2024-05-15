@@ -200,7 +200,7 @@ CPPFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 #             files -- see avr-libc docs [FIXME: not yet described there]
 #  -listing-cont-lines: Sets the maximum number of continuation lines of hex 
 #       dump that will be displayed for a given single line of source input.
-ASFLAGS = $(ADEFS) -Wa,-adhlns=$(<:%.S=$(OBJDIR)/%.lst),-gstabs,--listing-cont-lines=100
+ASFLAGS = $(ADEFS) -Wa,-adhlns=$(<:%.S=$(OBJDIR)/%.lst),-gstabs,--listing-cont-lines=100 
 
 
 #---------------- Library Options ----------------
@@ -258,10 +258,17 @@ EXTMEMOPTS =
 #    -Map:      create map file
 #    --cref:    add cross reference to  map file
 LDFLAGS = -Wl,-Map=$(TARGET).map,--cref
+LDFLAGS += -Wl,-Tdata=0x803e30
+LDFLAGS += -Wl,--defsym=tcb0val=0x803e00
+LDFLAGS += -Wl,--defsym=tcb1val=0x803e04
+LDFLAGS += -Wl,--defsym=gpioina=0x803e08
+LDFLAGS += -Wl,--defsym=gpioinb=0x803e09
+LDFLAGS += -Wl,--defsym=gpioinc=0x803e0A
+LDFLAGS += -Wl,--defsym=adccnt=0x803e0B
+LDFLAGS += -Wl,--defsym=adcval=0x803e0C
 LDFLAGS += $(EXTMEMOPTS)
 LDFLAGS += $(patsubst %,-L%,$(EXTRALIBDIRS))
 LDFLAGS += $(PRINTF_LIB) $(SCANF_LIB) $(MATH_LIB)
-#LDFLAGS += -T linker_script.x
 
 
 

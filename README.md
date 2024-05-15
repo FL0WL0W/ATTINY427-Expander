@@ -50,7 +50,7 @@ Setup and start the ADC
 0x00 //no accumulation, accumulation done in software so the readings are evenly spaced
 0x11 //single 12 bit mode and start
 ```
-Read the result at address 0x340C. There is also a rolling sample counter at 0x340B
+Read the result at address 0x3e0C. There is also a rolling sample counter at 0x3e0B
 
 ## Troubleshooting
 ### No response
