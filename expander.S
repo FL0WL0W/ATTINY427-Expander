@@ -15,32 +15,33 @@
 
 #define lvl1SREG r3
 ;register used to store SREG during lvl1 interrupt
-#define lvl1gpr r16
+#define lvl1gpr r20
 ;register used for general purpose in lvl1 interrupt
 
 #define lvl0SREG r4
 ;register used to store SREG during lvl0 interrupt
-#define lvl0gpr0 r18
-#define lvl0gpr1 r19
-#define lvl0gpr2 r17
+#define lvl0gpr0 r16
+#define lvl0gpr1 r17
+#define lvl0gpr2 r18
+#define lvl0gpr3 r19
 ;registers used for general purpose in lvl0 interrupt
 
-#define spistate r20
+#define spistate r21
 ; bit 4 read address
 ; bit 5 set address high to 0
 ; bit 6 read address low
 ; bit 7 write
-#define spilen r21
+#define spilen r22
 ; length left to be read for reading/writing. 0-31
 
-#define adcstate r22
+#define adcstate r23
 ; bits 0-3 is the current ADC index. 
 ; bit 7 is to clear index at end of this read.
 ; bit 6 is to clear the accumulate
 #define adcacc r5
 ; accumulate 0-15
 
-#define maingpr r23
+#define maingpr r24
 
 .data
 .comm tcb0val, 4
@@ -120,6 +121,7 @@ SPIREADADDRH:
 ADC0_RESRDY_vect:
     IN lvl0SREG, CPU_SREG
     LDS lvl0gpr0, ADC0_MUXPOS
+    MOV lvl0gpr3, lvl0gpr0
     ; * (2+2)
     LSL lvl0gpr0
     LDI ZH, hi8(gs(ADC0SETSAMPLE))
@@ -243,6 +245,25 @@ ADC0STARTSAMPLE:
     LDI lvl0gpr2, 0b00010001
     STS ADC0_COMMAND, lvl0gpr2
 
+    ; check and make sure current reading is enabled
+    LDI lvl0gpr2, 0b00000001
+    SBRC lvl0gpr3, 1
+    LDI lvl0gpr2, 0b00000100
+    SBRC lvl0gpr3, 2
+    SWAP lvl0gpr2
+    SBRC lvl0gpr3, 0
+    LSL lvl0gpr2
+    BST lvl0gpr3, 3
+    IN lvl0gpr3, analogenable0
+    BRTC ADC0CHECKENABLE
+    IN lvl0gpr3, analogenable1
+ADC0CHECKENABLE:
+    AND lvl0gpr3, lvl0gpr2
+    BRNE ADC0PASSCHECKENABLED
+    OUT CPU_SREG, lvl0SREG
+    RETI
+
+ADC0PASSCHECKENABLED:
     ; Z = adcbuff
     LDI ZH, hi8(adcbuff)
     LDI ZL, lo8(adcbuff)
@@ -253,12 +274,12 @@ ADC0STARTSAMPLE:
     LSL lvl0gpr2 ; * 2
     ADD ZL, lvl0gpr2
     ADC ZH, zero
-    ; Z + adcacc * 2
-    MOV lvl0gpr2, adcacc
-    ANDI lvl0gpr2, 0b00001111
     ; check if we need to clear accumulate
     SBRC adcstate, 6
     RJMP ADC0CLEARACCUMULATE
+    ; Z + adcacc * 2
+    MOV lvl0gpr2, adcacc
+    ANDI lvl0gpr2, 0b00001111
     LSL lvl0gpr2
     ADC ZH, zero
     ADD ZL, lvl0gpr2
@@ -266,11 +287,11 @@ ADC0STARTSAMPLE:
 
     ; load, store and subtract
     LD lvl0gpr2, Z
+    LDD lvl0gpr3, Z+1
     ST Z, lvl0gpr0
-    SUB lvl0gpr0, lvl0gpr2
-    LDD lvl0gpr2, Z+1
     STD Z+1, lvl0gpr1
-    SBC lvl0gpr1, lvl0gpr2
+    SUB lvl0gpr0, lvl0gpr2
+    SBC lvl0gpr1, lvl0gpr3
 
     ; Z = adcval + (adcstate & 0x0F) * 2
     LDI ZH, hi8(adcval)
@@ -278,14 +299,14 @@ ADC0STARTSAMPLE:
     MOV lvl0gpr2, adcstate
     ANDI lvl0gpr2, 0x0F
     LSL lvl0gpr2 ; * 2
-    ADD ZL, adcstate
+    ADD ZL, lvl0gpr2
     ADC ZH, zero
 
     ; load and add
     LD lvl0gpr2, Z
+    LDD lvl0gpr3, Z+1
     ADD lvl0gpr0, lvl0gpr2
-    LDD lvl0gpr2, Z+1
-    ADC lvl0gpr1, lvl0gpr2
+    ADC lvl0gpr1, lvl0gpr3
 
 ADC0CLEARACCUMULATERETURN:
     ; ensure spi is not transferring this section of memory
@@ -318,14 +339,12 @@ ADC0HIGHCHECK:
     SBRS adcstate, 7
     RJMP ADC0RETURN
     ; clear analogaccumulate clear bit if its been cleared
-    IN lvl0gpr0, analogaccumulate
     SBRC adcstate, 6
-    ANDI lvl0gpr0, 0b01111111
-    OUT analogaccumulate, lvl0gpr0
+    CBI analogaccumulate, 7
     ; reset adcstate
     MOV adcstate, zero
     ; set adcstate to clear accumulate
-    SBRS lvl0gpr0, 7
+    SBIS analogaccumulate, 7
     RJMP ADC0RETURN
     ORI adcstate, 0b01000000
     MOV adcacc, zero
@@ -367,22 +386,22 @@ ADC0CLEARACCUMULATE:
     ST Z+, lvl0gpr1
     ST Z+, lvl0gpr0
     ST Z+, lvl0gpr1
-    PUSH maingpr ; need an extra register here
-    ; lvl0gpr0/1 *= adcacc + 1
+    ; lvl0gpr0/1 *= analogaccumulate + 1
+    IN lvl0gpr2, analogaccumulate
+    ANDI lvl0gpr2, 0b00001111
     INC lvl0gpr2
     MUL lvl0gpr1, lvl0gpr2
-    MOV maingpr, r0
+    MOV lvl0gpr3, r0
     MUL lvl0gpr0, lvl0gpr2
-    ADD r1, maingpr
+    ADD r1, lvl0gpr3
     MOVW lvl0gpr0, r0
-    POP maingpr
     ; Z = adcval + (adcstate & 0x0F) * 2
     LDI ZH, hi8(adcval)
     LDI ZL, lo8(adcval)
     MOV lvl0gpr2, adcstate
     ANDI lvl0gpr2, 0x0F
     LSL lvl0gpr2 ; * 2
-    ADD ZL, adcstate
+    ADD ZL, lvl0gpr2
     ADC ZH, zero
     RJMP ADC0CLEARACCUMULATERETURN
 
