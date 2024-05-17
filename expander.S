@@ -120,13 +120,12 @@ SPIREADADDRH:
 .global ADC0_RESRDY_vect
 ADC0_RESRDY_vect:
     IN lvl0SREG, CPU_SREG
-    LDS lvl0gpr0, ADC0_MUXPOS
-    MOV lvl0gpr3, lvl0gpr0
+    LDS lvl0gpr3, ADC0_MUXPOS
     ; * (2+2)
-    LSL lvl0gpr0
+    LSL lvl0gpr3
     LDI ZH, hi8(gs(ADC0SETSAMPLE))
     LDI ZL, lo8(gs(ADC0SETSAMPLE))
-    ADD ZL, lvl0gpr0
+    ADD ZL, lvl0gpr3
     ADC ZH, zero
     IJMP
 ADC0SETSAMPLE:
@@ -185,11 +184,11 @@ ADC0SETSAMPLEBEGIN:
     NOP
 #endif
     ORI adcstate, 0b10000000
-    IN lvl0gpr1, analogaccumulate
-    ANDI lvl0gpr1, 0b00001111
-    MOV lvl0gpr2, adcacc
+    IN lvl0gpr0, analogaccumulate
+    ANDI lvl0gpr0, 0b00001111
+    MOV ZL, adcacc
     INC adcacc
-    CPSE lvl0gpr1, lvl0gpr2
+    CPSE lvl0gpr0, ZL
     RJMP ADC0SETSAMPLEBEGIN
     MOV adcacc, zero
     RJMP ADC0SETSAMPLEBEGIN
@@ -247,13 +246,13 @@ ADC0STARTSAMPLE:
 
     ; check and make sure current reading is enabled
     LDI lvl0gpr2, 0b00000001
-    SBRC lvl0gpr3, 1
-    LDI lvl0gpr2, 0b00000100
     SBRC lvl0gpr3, 2
+    LDI lvl0gpr2, 0b00000100
+    SBRC lvl0gpr3, 3
     SWAP lvl0gpr2
-    SBRC lvl0gpr3, 0
+    SBRC lvl0gpr3, 1
     LSL lvl0gpr2
-    BST lvl0gpr3, 3
+    BST lvl0gpr3, 4
     IN lvl0gpr3, analogenable0
     BRTC ADC0CHECKENABLE
     IN lvl0gpr3, analogenable1
@@ -421,11 +420,9 @@ main:
 #if defined(SPI_ALT)
     LDI maingpr, 0b00000001
     STS PORTMUX_SPIROUTEA, maingpr
-    LDI maingpr, 0b00000010
-    STS PORTC_DIRSET, maingpr
+    SBI VPORTC_DIR, 1
 #else
-    LDI maingpr, 0b00000100
-    STS PORTA_DIRSET, maingpr
+    SBI VPORTA_DIR, 2
 #endif
     LDI maingpr, 0b00000001
     STS SPI0_CTRLA, maingpr
