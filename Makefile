@@ -258,7 +258,7 @@ EXTMEMOPTS =
 #    -Map:      create map file
 #    --cref:    add cross reference to  map file
 LDFLAGS = -Wl,-Map=$(TARGET).map,--cref
-LDFLAGS += -Wl,-Tdata=0x803e30
+LDFLAGS += -Wl,-Tdata=0x803F90
 LDFLAGS += -Wl,--defsym=tcb0val=0x803e00
 LDFLAGS += -Wl,--defsym=tcb1val=0x803e04
 LDFLAGS += -Wl,--defsym=gpioina=0x803e08
@@ -266,6 +266,7 @@ LDFLAGS += -Wl,--defsym=gpioinb=0x803e09
 LDFLAGS += -Wl,--defsym=gpioinc=0x803e0A
 LDFLAGS += -Wl,--defsym=adccnt=0x803e0B
 LDFLAGS += -Wl,--defsym=adcval=0x803e0C
+LDFLAGS += -Wl,--defsym=adcbuff=0x803e30
 LDFLAGS += $(EXTMEMOPTS)
 LDFLAGS += $(patsubst %,-L%,$(EXTRALIBDIRS))
 LDFLAGS += $(PRINTF_LIB) $(SCANF_LIB) $(MATH_LIB)

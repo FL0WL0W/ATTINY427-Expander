@@ -15,33 +15,31 @@
 
 #define lvl1SREG r3
 ;register used to store SREG during lvl1 interrupt
-#define lvl1gpr r20
-;register used for general purpose in lvl1 interrupt
-
 #define lvl0SREG r4
 ;register used to store SREG during lvl0 interrupt
-#define lvl0gpr0 r16
-#define lvl0gpr1 r17
-#define lvl0gpr2 r18
-#define lvl0gpr3 r19
-;registers used for general purpose in lvl0 interrupt
 
-#define spistate r21
+#define spigpr r5
+;register used for general purpose in spi interrupt
+#define spistate r16
 ; bit 4 read address
 ; bit 5 set address high to 0
 ; bit 6 read address low
 ; bit 7 write
-#define spilen r22
+#define spilen r17
 ; length left to be read for reading/writing. 0-31
 
-#define adcstate r23
+#define adcvalreg0 r6
+#define adcvalreg1 r7
+#define adcgpr r0
+;registers used for general purpose in adc interrupt. r0 and r1 are also used for MUL
+#define adcacc r8
+; accumulate 0-15
+#define adcstate r18
 ; bits 0-3 is the current ADC index. 
 ; bit 7 is to clear index at end of this read.
 ; bit 6 is to clear the accumulate
-#define adcacc r5
-; accumulate 0-15
 
-#define maingpr r24
+#define maingpr r19
 
 .data
 .comm tcb0val, 4
@@ -64,20 +62,20 @@ SPI0_INT_vect:
     SBRC spistate, 7
     RJMP SPIWRITE
 SPIREAD:
-    LD lvl1gpr, X+
-    STS SPI0_DATA, lvl1gpr
+    LD spigpr, X+
+    STS SPI0_DATA, spigpr
     DEC spilen
     CP spilen, zero
     BREQ SPIREADLEN
-    LDS lvl1gpr, SPI0_DATA
+    LDS spigpr, SPI0_DATA
     OUT CPU_SREG, lvl1SREG
     RETI
 
 SPIWRITE:
-    LD lvl1gpr, X
-    STS SPI0_DATA, lvl1gpr
-    LDS lvl1gpr, SPI0_DATA
-    ST X+, lvl1gpr
+    LD spigpr, X
+    STS SPI0_DATA, spigpr
+    LDS spigpr, SPI0_DATA
+    ST X+, spigpr
     DEC spilen
     OUT CPU_SREG, lvl1SREG
     RETI
@@ -120,12 +118,12 @@ SPIREADADDRH:
 .global ADC0_RESRDY_vect
 ADC0_RESRDY_vect:
     IN lvl0SREG, CPU_SREG
-    LDS lvl0gpr3, ADC0_MUXPOS
+    LDS adcgpr, ADC0_MUXPOS
     ; * (2+2)
-    LSL lvl0gpr3
+    LSL adcgpr
     LDI ZH, hi8(gs(ADC0SETSAMPLE))
     LDI ZL, lo8(gs(ADC0SETSAMPLE))
-    ADD ZL, lvl0gpr3
+    ADD ZL, adcgpr
     ADC ZH, zero
     IJMP
 ADC0SETSAMPLE:
@@ -184,128 +182,127 @@ ADC0SETSAMPLEBEGIN:
     NOP
 #endif
     ORI adcstate, 0b10000000
-    IN lvl0gpr0, analogaccumulate
-    ANDI lvl0gpr0, 0b00001111
+    IN ZH, analogaccumulate
+    LDI ZL, 0b00001111
+    AND ZH, ZL
+    AND adcacc, ZL
     MOV ZL, adcacc
     INC adcacc
-    CPSE lvl0gpr0, ZL
+    CPSE ZH, ZL
     RJMP ADC0SETSAMPLEBEGIN
     MOV adcacc, zero
     RJMP ADC0SETSAMPLEBEGIN
 ADC0SETSAMPLE1:
-    LDI lvl0gpr0, 1
+    LDI ZL, 1
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE2:
-    LDI lvl0gpr0, 2
+    LDI ZL, 2
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE3:
-    LDI lvl0gpr0, 3
+    LDI ZL, 3
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE4:
-    LDI lvl0gpr0, 4
+    LDI ZL, 4
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE5:
-    LDI lvl0gpr0, 5
+    LDI ZL, 5
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE6:
-    LDI lvl0gpr0, 6
+    LDI ZL, 6
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE7:
-    LDI lvl0gpr0, 7
+    LDI ZL, 7
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE8:
-    LDI lvl0gpr0, 8
+    LDI ZL, 8
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE9:
-    LDI lvl0gpr0, 9
+    LDI ZL, 9
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE10:
-    LDI lvl0gpr0, 10
+    LDI ZL, 10
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE11:
-    LDI lvl0gpr0, 11
+    LDI ZL, 11
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE12:
-    LDI lvl0gpr0, 12
+    LDI ZL, 12
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE13:
-    LDI lvl0gpr0, 13
+    LDI ZL, 13
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE14:
-    LDI lvl0gpr0, 14
+    LDI ZL, 14
     RJMP ADC0STARTSAMPLE
 ADC0SETSAMPLE15:
-    LDI lvl0gpr0, 15
+    LDI ZL, 15
 
 ADC0STARTSAMPLE:
-    STS ADC0_MUXPOS, lvl0gpr0
-    LDS lvl0gpr0, ADC0_RESULT0
-    LDS lvl0gpr1, ADC0_RESULT1
-    LDI lvl0gpr2, 0b00010001
-    STS ADC0_COMMAND, lvl0gpr2
+    STS ADC0_MUXPOS, ZL
+    LDS adcvalreg0, ADC0_RESULT0
+    LDS adcvalreg1, ADC0_RESULT1
+    LDI ZL, 0b00010001
+    STS ADC0_COMMAND, ZL
 
     ; check and make sure current reading is enabled
-    LDI lvl0gpr2, 0b00000001
-    SBRC lvl0gpr3, 2
-    LDI lvl0gpr2, 0b00000100
-    SBRC lvl0gpr3, 3
-    SWAP lvl0gpr2
-    SBRC lvl0gpr3, 1
-    LSL lvl0gpr2
-    BST lvl0gpr3, 4
-    IN lvl0gpr3, analogenable0
+    LDI ZL, 0b00000001
+    SBRC adcgpr, 2
+    LDI ZL, 0b00000100
+    SBRC adcgpr, 3
+    SWAP ZL
+    SBRC adcgpr, 1
+    LSL ZL
+    BST adcgpr, 4
+    IN adcgpr, analogenable0
     BRTC ADC0CHECKENABLE
-    IN lvl0gpr3, analogenable1
+    IN adcgpr, analogenable1
 ADC0CHECKENABLE:
-    AND lvl0gpr3, lvl0gpr2
+    AND adcgpr, ZL
     BRNE ADC0PASSCHECKENABLED
     OUT CPU_SREG, lvl0SREG
     RETI
 
 ADC0PASSCHECKENABLED:
-    ; Z = adcbuff
+    ; ZH = hi8(adcbuff)
     LDI ZH, hi8(adcbuff)
-    LDI ZL, lo8(adcbuff)
-    ; Z += (adcstate & 0x0F) * 32
-    MOV lvl0gpr2, adcstate
-    ANDI lvl0gpr2, 0x0F
-    SWAP lvl0gpr2 ; * 16
-    LSL lvl0gpr2 ; * 2
-    ADD ZL, lvl0gpr2
+    ; ZL = (adcstate & 0x0F) * 32
+    MOV ZL, adcstate
+    ANDI ZL, 0x0F
+    SWAP ZL ; * 16
+    LSL ZL ; * 2
     ADC ZH, zero
+    ; Z += lo8(adcbuff)
+    ADIW ZL, 0x30; lo8(adcbuff) for some reason compiler complains using lo8
     ; check if we need to clear accumulate
     SBRC adcstate, 6
     RJMP ADC0CLEARACCUMULATE
     ; Z + adcacc * 2
-    MOV lvl0gpr2, adcacc
-    ANDI lvl0gpr2, 0b00001111
-    LSL lvl0gpr2
+    MOV adcgpr, adcacc
+    LSL adcgpr
     ADC ZH, zero
-    ADD ZL, lvl0gpr2
+    ADD ZL, adcgpr
     ADC ZH, zero
 
     ; load, store and subtract
-    LD lvl0gpr2, Z
-    LDD lvl0gpr3, Z+1
-    ST Z, lvl0gpr0
-    STD Z+1, lvl0gpr1
-    SUB lvl0gpr0, lvl0gpr2
-    SBC lvl0gpr1, lvl0gpr3
+    LD r0, Z
+    LDD r1, Z+1
+    ST Z, adcvalreg0
+    STD Z+1, adcvalreg1
+    SUB adcvalreg0, r0
+    SBC adcvalreg1, r1
 
     ; Z = adcval + (adcstate & 0x0F) * 2
     LDI ZH, hi8(adcval)
-    LDI ZL, lo8(adcval)
-    MOV lvl0gpr2, adcstate
-    ANDI lvl0gpr2, 0x0F
-    LSL lvl0gpr2 ; * 2
-    ADD ZL, lvl0gpr2
-    ADC ZH, zero
+    MOV ZL, adcstate
+    ANDI ZL, 0x0F
+    LSL ZL ; * 2
+    ADIW ZL, 0x0C; lo8(adcval) for some reason compiler complains using lo8
 
     ; load and add
-    LD lvl0gpr2, Z
-    LDD lvl0gpr3, Z+1
-    ADD lvl0gpr0, lvl0gpr2
-    ADC lvl0gpr1, lvl0gpr3
+    LD r0, Z
+    LDD r1, Z+1
+    ADD adcvalreg0, r0
+    ADC adcvalreg1, r1
 
 ADC0CLEARACCUMULATERETURN:
     ; ensure spi is not transferring this section of memory
@@ -316,7 +313,7 @@ ADC0LOWCHECK:
     CPC ZH, XH
     CPSE spilen, zero
     BREQ ADC0LOWCHECK
-    ST Z+, lvl0gpr0
+    ST Z+, adcvalreg0
     SEI
 ADC0HIGHCHECK:
     SEI
@@ -325,12 +322,12 @@ ADC0HIGHCHECK:
     CPC ZH, XH
     CPSE spilen, zero
     BREQ ADC0HIGHCHECK
-    ST Z, lvl0gpr1
+    ST Z, adcvalreg1
     SEI
 
-    LDS lvl0gpr0, adccnt
-    INC lvl0gpr0
-    STS adccnt, lvl0gpr0
+    LDS ZL, adccnt
+    INC ZL
+    STS adccnt, ZL
 
     INC adcstate
 
@@ -353,55 +350,53 @@ ADC0RETURN:
     RETI
 
 ADC0CLEARACCUMULATE:
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ST Z+, lvl0gpr0
-    ST Z+, lvl0gpr1
-    ; lvl0gpr0/1 *= analogaccumulate + 1
-    IN lvl0gpr2, analogaccumulate
-    ANDI lvl0gpr2, 0b00001111
-    INC lvl0gpr2
-    MUL lvl0gpr1, lvl0gpr2
-    MOV lvl0gpr3, r0
-    MUL lvl0gpr0, lvl0gpr2
-    ADD r1, lvl0gpr3
-    MOVW lvl0gpr0, r0
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ST Z+, adcvalreg0
+    ST Z+, adcvalreg1
+    ; adcvalreg0/7 *= analogaccumulate + 1
+    IN ZH, analogaccumulate
+    ANDI ZH, 0b00001111
+    INC ZH
+    MUL adcvalreg1, ZH
+    MOV ZL, r0
+    MUL adcvalreg0, ZH
+    ADD r1, ZL
+    MOVW adcvalreg0, r0
     ; Z = adcval + (adcstate & 0x0F) * 2
     LDI ZH, hi8(adcval)
-    LDI ZL, lo8(adcval)
-    MOV lvl0gpr2, adcstate
-    ANDI lvl0gpr2, 0x0F
-    LSL lvl0gpr2 ; * 2
-    ADD ZL, lvl0gpr2
-    ADC ZH, zero
+    MOV ZL, adcstate
+    ANDI ZL, 0x0F
+    LSL ZL ; * 2
+    ADIW ZL, 0x0C; lo8(adcval) for some reason compiler complains using lo8
     RJMP ADC0CLEARACCUMULATERETURN
 
 .global main
