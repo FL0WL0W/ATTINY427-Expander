@@ -18,8 +18,6 @@
 #define lvl0SREG r4
 ;register used to store SREG during lvl0 interrupt
 
-#define spigpr r5
-;register used for general purpose in spi interrupt
 #define spistate r16
 ; bit 4 read address
 ; bit 5 set address high to 0
@@ -27,17 +25,19 @@
 ; bit 7 write
 #define spilen r17
 ; length left to be read for reading/writing. 0-31
+#define spigpr r5
+;register used for general purpose in spi interrupt
 
-;registers used for general purpose in adc interrupt
-#define adcacc r6
-; accumulate 0-15
-#define adcstate r7
+#define adcstate r6
 ; bits 0-3 is the current ADC index. 
 ; bit 7 is to clear index at end of this read.
 ; bit 6 is to clear the accumulate
+#define adcacc r7
+; accumulate 0-15
 #define adcvalreg0 r8
 #define adcvalreg1 r9
 #define adcgpr r10
+;registers used for general purpose in adc interrupt
 
 #define maingpr r18
 
@@ -407,16 +407,17 @@ ADC0CLEARACCUMULATE:
 
 .global main
 main:
-    ; initialize zero and states
-    LDI maingpr, 0
-    MOV zero, maingpr
-    MOV adcstate, zero
-    MOV spilen, zero
-    MOV spistate, zero
     ; initialize clock
     LDI maingpr, 0xD8
     OUT CCP, maingpr
     STS CLKCTRL_MCLKCTRLB, zero
+    ; initialize zero and states
+    LDI maingpr, 0
+    MOV zero, maingpr
+    MOV adcstate, zero
+    MOV adcacc, zero
+    MOV spistate, zero
+    MOV spilen, zero
     ; initialize SPI
 #if defined(SPI_ALT)
     LDI maingpr, 0b00000001
