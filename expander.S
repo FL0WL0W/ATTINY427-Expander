@@ -34,12 +34,12 @@
 ;registers used for general purpose in adc interrupt
 #define adcacc r9
 ; accumulate 0-15
-#define adcstate r18
+#define adcstate r10
 ; bits 0-3 is the current ADC index. 
 ; bit 7 is to clear index at end of this read.
 ; bit 6 is to clear the accumulate
 
-#define maingpr r19
+#define maingpr r18
 
 .data
 .comm tcb0val, 4
@@ -181,7 +181,8 @@ ADC0SETSAMPLEBEGIN:
     NOP
     NOP
 #endif
-    ORI adcstate, 0b10000000
+    LDI ZL, 0b10000000
+    OR adcstate, ZL
     IN ZH, analogaccumulate
     LDI ZL, 0b00001111
     AND ZH, ZL
@@ -342,7 +343,8 @@ ADC0HIGHCHECK:
     ; set adcstate to clear accumulate
     SBIS analogaccumulate, 7
     RJMP ADC0RETURN
-    ORI adcstate, 0b01000000
+    LDI ZL, 0b01000000
+    OR adcstate, ZL
     MOV adcacc, zero
 
 ADC0RETURN:
