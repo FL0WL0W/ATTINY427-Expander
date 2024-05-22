@@ -39,7 +39,9 @@
 #define adcgpr r10
 ;registers used for general purpose in adc interrupt
 
-#define maingpr r18
+#define tcbgpr r8
+
+#define maingpr r19
 
 .data
 .comm tcb0val, 4
@@ -404,6 +406,60 @@ ADC0CLEARACCUMULATE:
     LSL ZL ; * 2
     ADIW ZL, 0x0C; lo8(adcval) for some reason compiler complains using lo8
     RJMP ADC0CLEARACCUMULATERETURN
+
+.global TCB0_INT_vect
+TCB0_INT_vect:
+    IN lvl0SREG, CPU_SREG
+    ; Z = &tcb0val
+    LDI ZH, hi8(tcb0val)
+    LDI ZL, lo8(tcb0val)
+    ; tcb0val = TCB0_CCMP << 16 | TCB0_CNT
+    LDS tcbgpr, TCB0_CNTL
+    RCALL TCBVALWRITE
+    LDS tcbgpr, TCB0_CNTH
+    RCALL TCBVALWRITE
+    LDS tcbgpr, TCB0_CCMPL
+    RCALL TCBVALWRITE
+    LDS tcbgpr, TCB0_CCMPH
+    RCALL TCBVALWRITE    
+    ; clear flags
+    LDI ZL, 0b00000011
+    STS TCB0_INTFLAGS, ZL
+    OUT CPU_SREG, lvl0SREG
+    RETI
+
+.global TCB1_INT_vect
+TCB1_INT_vect:
+    IN lvl0SREG, CPU_SREG
+    ; Z = &tcb1val
+    LDI ZH, hi8(tcb1val)
+    LDI ZL, lo8(tcb1val)
+    ; tcb1val = TCB1_CCMP << 16 | TCB1_CNT
+    LDS tcbgpr, TCB1_CNTL
+    RCALL TCBVALWRITE
+    LDS tcbgpr, TCB1_CNTH
+    RCALL TCBVALWRITE
+    LDS tcbgpr, TCB1_CCMPL
+    RCALL TCBVALWRITE
+    LDS tcbgpr, TCB1_CCMPH
+    RCALL TCBVALWRITE    
+    ; clear flags
+    LDI ZL, 0b00000011
+    STS TCB1_INTFLAGS, ZL
+    OUT CPU_SREG, lvl0SREG
+    RETI
+
+
+TCBVALWRITE:
+    SEI
+    CLI
+    CP ZL, XL
+    CPC ZH, XH
+    CPSE spilen, zero
+    BREQ TCBVALWRITE
+    ST Z+, tcbgpr
+    SEI
+    RET
 
 .global main
 main:
