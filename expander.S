@@ -28,16 +28,16 @@
 #define spilen r17
 ; length left to be read for reading/writing. 0-31
 
-#define adcvalreg0 r6
-#define adcvalreg1 r7
-#define adcgpr r8
 ;registers used for general purpose in adc interrupt
-#define adcacc r9
+#define adcacc r6
 ; accumulate 0-15
-#define adcstate r10
+#define adcstate r7
 ; bits 0-3 is the current ADC index. 
 ; bit 7 is to clear index at end of this read.
 ; bit 6 is to clear the accumulate
+#define adcvalreg0 r8
+#define adcvalreg1 r9
+#define adcgpr r10
 
 #define maingpr r18
 
