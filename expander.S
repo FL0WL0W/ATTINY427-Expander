@@ -30,9 +30,9 @@
 
 #define adcvalreg0 r6
 #define adcvalreg1 r7
-#define adcgpr r0
-;registers used for general purpose in adc interrupt. r0 and r1 are also used for MUL
-#define adcacc r8
+#define adcgpr r8
+;registers used for general purpose in adc interrupt
+#define adcacc r9
 ; accumulate 0-15
 #define adcstate r18
 ; bits 0-3 is the current ADC index. 
@@ -284,12 +284,12 @@ ADC0PASSCHECKENABLED:
     ADC ZH, zero
 
     ; load, store and subtract
-    LD r0, Z
-    LDD r1, Z+1
+    LD adcgpr, Z
     ST Z, adcvalreg0
+    SUB adcvalreg0, adcgpr
+    LDD adcgpr, Z+1
     STD Z+1, adcvalreg1
-    SUB adcvalreg0, r0
-    SBC adcvalreg1, r1
+    SBC adcvalreg1, adcgpr
 
     ; Z = adcval + (adcstate & 0x0F) * 2
     LDI ZH, hi8(adcval)
@@ -299,10 +299,10 @@ ADC0PASSCHECKENABLED:
     ADIW ZL, 0x0C; lo8(adcval) for some reason compiler complains using lo8
 
     ; load and add
-    LD r0, Z
-    LDD r1, Z+1
-    ADD adcvalreg0, r0
-    ADC adcvalreg1, r1
+    LD adcgpr, Z
+    ADD adcvalreg0, adcgpr
+    LDD adcgpr, Z+1
+    ADC adcvalreg1, adcgpr
 
 ADC0CLEARACCUMULATERETURN:
     ; ensure spi is not transferring this section of memory
@@ -383,6 +383,8 @@ ADC0CLEARACCUMULATE:
     ST Z+, adcvalreg0
     ST Z+, adcvalreg1
     ; adcvalreg0/7 *= analogaccumulate + 1
+    PUSH r0
+    PUSH r1
     IN ZH, analogaccumulate
     ANDI ZH, 0b00001111
     INC ZH
@@ -391,6 +393,8 @@ ADC0CLEARACCUMULATE:
     MUL adcvalreg0, ZH
     ADD r1, ZL
     MOVW adcvalreg0, r0
+    POP r1
+    POP r0
     ; Z = adcval + (adcstate & 0x0F) * 2
     LDI ZH, hi8(adcval)
     MOV ZL, adcstate
