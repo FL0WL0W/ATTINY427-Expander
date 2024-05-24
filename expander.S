@@ -70,9 +70,9 @@
 .comm tcb1buff, 4
 .comm adcbuff, 11 * 16 * 2
 tcb0previouspulse:
-.short 0xFFFF
+.short 0
 tcb1previouspulse:
-.short 0xFFFF
+.short 0
 
 .text
 .global SPI0_INT_vect
