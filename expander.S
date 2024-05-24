@@ -10,6 +10,13 @@
 ; bits 0-3 accumulate count
 ; bit 7 clear accumulate. should be written whenever changing accumulate count or changing analog enables
 
+
+#define SENTenableTCB0Bit 4
+#define SENTenableTCB1Bit 5
+#define SENTenable GPIO_GPIOR2
+; bit 4 enable on TCB0
+; bit 5 enable on TCB1
+
 #define zero r2
 ;register always containing zero
 
@@ -34,14 +41,22 @@
 ; bit 6 is to clear the accumulate
 #define adcacc r7
 ; accumulate 0-15
-#define adcvalreg0 r8
-#define adcvalreg1 r9
-#define adcgpr r10
+#define adcvalreg0 r14
+#define adcvalreg1 r15
+#define adcgpr r18
 ;registers used for general purpose in adc interrupt
 
-#define tcbgpr r8
+#define tcbgpr0 r18
+#define tcbgpr1 r14
 
-#define maingpr r19
+#define tcb0syncl r8
+#define tcb0synch r9
+#define tcb0state r12
+#define tcb1syncl r10
+#define tcb1synch r11
+#define tcb1state r13
+
+#define maingpr0 r19
 
 .data
 .comm tcb0val, 4
@@ -51,7 +66,13 @@
 .comm gpioinc, 1
 .comm adccnt, 1
 .comm adcval, 11 * 2
+.comm tcb0buff, 4
+.comm tcb1buff, 4
 .comm adcbuff, 11 * 16 * 2
+tcb0previouspulse:
+.short 0xFFFF
+tcb1previouspulse:
+.short 0xFFFF
 
 .text
 .global SPI0_INT_vect
@@ -275,7 +296,7 @@ ADC0PASSCHECKENABLED:
     LSL ZL ; * 2
     ADC ZH, zero
     ; Z += lo8(adcbuff)
-    ADIW ZL, 0x30; lo8(adcbuff) for some reason compiler complains using lo8
+    ADIW ZL, 0x3C; lo8(adcbuff) for some reason compiler complains using lo8
     ; check if we need to clear accumulate
     SBRC adcstate, 6
     RJMP ADC0CLEARACCUMULATE
@@ -302,29 +323,22 @@ ADC0PASSCHECKENABLED:
     ADIW ZL, 0x0C; lo8(adcval) for some reason compiler complains using lo8
 
     ; load and add
-    LD adcgpr, Z
+    LD adcgpr, Z+
     ADD adcvalreg0, adcgpr
-    LDD adcgpr, Z+1
+    LD adcgpr, Z
     ADC adcvalreg1, adcgpr
 
 ADC0CLEARACCUMULATERETURN:
     ; ensure spi is not transferring this section of memory
-ADC0LOWCHECK:
+ADC0CHECK:
     SEI
     CLI
     CP ZL, XL
     CPC ZH, XH
     CPSE spilen, zero
-    BREQ ADC0LOWCHECK
+    BREQ ADC0CHECK
+    ST -Z, adcvalreg0
     ST Z+, adcvalreg0
-    SEI
-ADC0HIGHCHECK:
-    SEI
-    CLI
-    CP ZL, XL
-    CPC ZH, XH
-    CPSE spilen, zero
-    BREQ ADC0HIGHCHECK
     ST Z, adcvalreg1
     SEI
 
@@ -404,23 +418,25 @@ ADC0CLEARACCUMULATE:
     MOV ZL, adcstate
     ANDI ZL, 0x0F
     LSL ZL ; * 2
-    ADIW ZL, 0x0C; lo8(adcval) for some reason compiler complains using lo8
+    ADIW ZL, 0x0D; lo8(adcval) + 1 for some reason compiler complains using lo8
     RJMP ADC0CLEARACCUMULATERETURN
 
 .global TCB0_INT_vect
 TCB0_INT_vect:
     IN lvl0SREG, CPU_SREG
+    SBIC SENTenable, SENTenableTCB0Bit
+    RJMP SENTTCB0
     ; Z = &tcb0val
     LDI ZH, hi8(tcb0val)
     LDI ZL, lo8(tcb0val)
     ; tcb0val = TCB0_CCMP << 16 | TCB0_CNT
-    LDS tcbgpr, TCB0_CNTL
+    LDS tcbgpr0, TCB0_CNTL
     RCALL TCBVALWRITE
-    LDS tcbgpr, TCB0_CNTH
+    LDS tcbgpr0, TCB0_CNTH
     RCALL TCBVALWRITE
-    LDS tcbgpr, TCB0_CCMPL
+    LDS tcbgpr0, TCB0_CCMPL
     RCALL TCBVALWRITE
-    LDS tcbgpr, TCB0_CCMPH
+    LDS tcbgpr0, TCB0_CCMPH
     RCALL TCBVALWRITE    
     ; clear flags
     LDI ZL, 0b00000011
@@ -428,27 +444,145 @@ TCB0_INT_vect:
     OUT CPU_SREG, lvl0SREG
     RETI
 
-.global TCB1_INT_vect
-TCB1_INT_vect:
-    IN lvl0SREG, CPU_SREG
-    ; Z = &tcb1val
-    LDI ZH, hi8(tcb1val)
-    LDI ZL, lo8(tcb1val)
-    ; tcb1val = TCB1_CCMP << 16 | TCB1_CNT
-    LDS tcbgpr, TCB1_CNTL
+SENTTCB0COPYBUFF:
+    LDI ZH, hi8(tcb0val)
+    LDI ZL, lo8(tcb0val)
+    ; tcb0val = tcb0buff
+    LDS tcbgpr0, tcb0buff
     RCALL TCBVALWRITE
-    LDS tcbgpr, TCB1_CNTH
+    LDS tcbgpr0, tcb0buff+1
     RCALL TCBVALWRITE
-    LDS tcbgpr, TCB1_CCMPL
+    LDS tcbgpr0, tcb0buff+2
     RCALL TCBVALWRITE
-    LDS tcbgpr, TCB1_CCMPH
-    RCALL TCBVALWRITE    
-    ; clear flags
+    LDS tcbgpr0, tcb0buff+3
+    RCALL TCBVALWRITE
+    MOV tcb0state, zero
+    MOV tcb0synch, zero
+    MOV tcb0syncl, zero
+    LDS ZL, TCB0_CCMPL
+    LDS ZH, TCB0_CCMPH
+    STS tcb0previouspulse, ZL
+    STS tcb0previouspulse+1, ZH 
     LDI ZL, 0b00000011
-    STS TCB1_INTFLAGS, ZL
+    STS TCB0_INTFLAGS, ZL
     OUT CPU_SREG, lvl0SREG
     RETI
 
+SENTTCB0:
+    ; check if state = 8. If so, this is pause pulse, copy buffer to value
+    SBRC tcb0state, 3
+    RJMP SENTTCB0COPYBUFF
+    ; check if there was an overflow. if so, disregard this pulse, it's probably a pause pulse not caught by state
+    LDS ZL, TCB0_INTFLAGS
+    SBRC ZL, 1
+    RJMP SENTTCB0RETURN
+    CP tcb0synch, zero
+    CPC tcb0syncl, zero
+    BRNE SENTTCB0SYNCED
+    RJMP SENTTCB0SYNCTOOSMALL
+SENTTCB0SYNCED:
+    LDS ZL, TCB0_CCMPL
+    LDS ZH, TCB0_CCMPH
+    ; subtract 6.5 Ticks
+    SUB ZL, tcb0syncl
+    SBC ZH, tcb0synch
+    SUB ZL, tcb0syncl
+    SBC ZH, tcb0synch
+    SUB ZL, tcb0syncl
+    SBC ZH, tcb0synch
+    SUB ZL, tcb0syncl
+    SBC ZH, tcb0synch
+    SUB ZL, tcb0syncl
+    SBC ZH, tcb0synch
+    SUB ZL, tcb0syncl
+    SBC ZH, tcb0synch
+    MOV tcbgpr1, tcb0syncl
+    LSR tcb0synch
+    ROR tcbgpr1
+    SUB ZL, tcbgpr1
+    SBC ZH, tcb0synch
+    LSL tcbgpr1
+    ROL tcb0synch
+    ; if negative, tcb0sync is too big
+    BRCS SENTTCB0SYNCTOOBIG
+    MOV tcbgpr1, zero
+    SUB ZL, tcb0syncl
+    SBC ZH, tcb0synch
+SENTTCB0CNT:
+    BRCS SENTTCB0CNTCMPLT
+    SUB ZL, tcb0syncl
+    SBC ZH, tcb0synch
+    INC tcbgpr1
+    ; if tcbgpr1 < 16, continue
+    SBRC tcbgpr1, 4
+    RJMP SENTTCB0CNT
+    RJMP SENTTCB0SYNCTOOSMALL
+SENTTCB0CNTCMPLT:
+    MOV ZL, tcb0state
+    LSR ZL
+    LDI ZH, hi8(tcb0buff)
+    ADIW Z, 0x30; lo8(tcb0buff)
+    SBRS tcb0state, 1
+    RJMP SENTTCB0LOW
+    LD tcbgpr0, Z
+    ANDI tcbgpr0, 0x0F
+    SWAP tcbgpr1
+    OR tcbgpr1, tcbgpr0
+SENTTCB0LOW:
+    ST Z, tcbgpr1
+
+
+    INC tcb0state
+    LDS ZL, TCB0_CCMPL
+    LDS ZH, TCB0_CCMPH
+    STS tcb0previouspulse, ZL
+    STS tcb0previouspulse+1, ZH
+SENTTCB0RETURN:
+    LDI ZL, 0b00000011
+    STS TCB0_INTFLAGS, ZL
+    OUT CPU_SREG, lvl0SREG
+    RETI
+
+SENTTCB0SYNCTOOSMALL:
+    ; getting here means we need to use this pulse as sync pulse
+    LDS ZL, TCB0_CCMPL
+    LDS ZH, TCB0_CCMPH
+    STS tcb0previouspulse, ZL
+    STS tcb0previouspulse+1, ZH
+    RCALL DIVIDEZBY56
+    MOVW tcb0syncl, Z
+    MOV tcb0state, zero
+    RJMP SENTTCB0RETURN
+SENTTCB0SYNCTOOBIG:
+    ; getting here means we need to use previous pulse as sync pulse
+    LDS ZL, tcb0previouspulse
+    LDS ZH, tcb0previouspulse+1
+    RCALL DIVIDEZBY56
+    MOVW tcb0syncl, Z
+    MOV tcb0state, zero
+    RJMP SENTTCB0SYNCED
+
+DIVIDEZBY56:
+    MOV tcbgpr0, ZL
+    MOV ZL, ZH
+    SWAP ZL
+    ANDI ZL, 0x0F
+    LSR ZH
+    ROR tcbgpr0
+    ADD ZL, ZH
+    LSR ZH
+    ROR tcbgpr0
+    SWAP ZH
+    SWAP tcbgpr0
+    ANDI tcbgpr0, 0x0F
+    ADD ZL, tcbgpr0
+    ADC ZH, zero
+    MOV tcbgpr0, ZH
+    ANDI tcbgpr0, 0xF0
+    ADD ZL, tcbgpr0
+    ADC ZH, zero
+    ANDI ZH, 0x0F
+    RET
 
 TCBVALWRITE:
     SEI
@@ -457,45 +591,81 @@ TCBVALWRITE:
     CPC ZH, XH
     CPSE spilen, zero
     BREQ TCBVALWRITE
-    ST Z+, tcbgpr
+    ST Z+, tcbgpr0
     SEI
     RET
+
+SENTTCB1:
+    LDI ZL, 0b00000011
+    STS TCB1_INTFLAGS, ZL
+    OUT CPU_SREG, lvl0SREG
+    RETI
+
+.global TCB1_INT_vect
+TCB1_INT_vect:
+    IN lvl0SREG, CPU_SREG
+    SBIC SENTenable, SENTenableTCB0Bit
+    RJMP SENTTCB1
+    ; Z = &tcb1val
+    LDI ZH, hi8(tcb1val)
+    LDI ZL, lo8(tcb1val)
+    ; tcb1val = TCB1_CCMP << 16 | TCB1_CNT
+    LDS tcbgpr0, TCB1_CNTL
+    RCALL TCBVALWRITE
+    LDS tcbgpr0, TCB1_CNTH
+    RCALL TCBVALWRITE
+    LDS tcbgpr0, TCB1_CCMPL
+    RCALL TCBVALWRITE
+    LDS tcbgpr0, TCB1_CCMPH
+    RCALL TCBVALWRITE    
+    ; clear flags
+    LDI ZL, 0b00000011
+    STS TCB1_INTFLAGS, ZL
+    OUT CPU_SREG, lvl0SREG
+    RETI
+
 
 .global main
 main:
     ; initialize clock
-    LDI maingpr, 0xD8
-    OUT CCP, maingpr
+    LDI maingpr0, 0xD8
+    OUT CCP, maingpr0
     STS CLKCTRL_MCLKCTRLB, zero
     ; initialize zero and states
-    LDI maingpr, 0
-    MOV zero, maingpr
+    LDI maingpr0, 0
+    MOV zero, maingpr0
     MOV adcstate, zero
     MOV adcacc, zero
     MOV spistate, zero
     MOV spilen, zero
+    MOV tcb0syncl, zero
+    MOV tcb0synch, zero
+    MOV tcb0state, zero
+    MOV tcb1syncl, zero
+    MOV tcb1synch, zero
+    MOV tcb1state, zero
     ; initialize SPI
 #if defined(SPI_ALT)
-    LDI maingpr, 0b00000001
-    STS PORTMUX_SPIROUTEA, maingpr
+    LDI maingpr0, 0b00000001
+    STS PORTMUX_SPIROUTEA, maingpr0
     SBI VPORTC_DIR, 1
 #else
     SBI VPORTA_DIR, 2
 #endif
-    LDI maingpr, 0b00000001
-    STS SPI0_CTRLA, maingpr
-    LDI maingpr, 0b10000000
-    STS SPI0_CTRLB, maingpr
-    STS SPI0_INTCTRL, maingpr
-    LDI maingpr, SPI0_INT_vect_num
-    STS CPUINT_LVL1VEC, maingpr
+    LDI maingpr0, 0b00000001
+    STS SPI0_CTRLA, maingpr0
+    LDI maingpr0, 0b10000000
+    STS SPI0_CTRLB, maingpr0
+    STS SPI0_INTCTRL, maingpr0
+    LDI maingpr0, SPI0_INT_vect_num
+    STS CPUINT_LVL1VEC, maingpr0
     SEI
 mainloop:
-    IN maingpr, VPORTA_IN
-    STS gpioina, maingpr
-    IN maingpr, VPORTB_IN
-    STS gpioinb, maingpr
-    IN maingpr, VPORTC_IN
-    STS gpioinc, maingpr
+    IN maingpr0, VPORTA_IN
+    STS gpioina, maingpr0
+    IN maingpr0, VPORTB_IN
+    STS gpioinb, maingpr0
+    IN maingpr0, VPORTC_IN
+    STS gpioinc, maingpr0
 	RJMP mainloop
 .end
