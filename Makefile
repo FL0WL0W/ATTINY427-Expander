@@ -259,13 +259,15 @@ EXTMEMOPTS =
 #    --cref:    add cross reference to  map file
 LDFLAGS = -Wl,-Map=$(TARGET).map,--cref
 LDFLAGS += -Wl,-Tdata=0x803FA0
-LDFLAGS += -Wl,--defsym=tcb0val=0x803e00
-LDFLAGS += -Wl,--defsym=tcb1val=0x803e04
-LDFLAGS += -Wl,--defsym=gpioina=0x803e08
-LDFLAGS += -Wl,--defsym=gpioinb=0x803e09
-LDFLAGS += -Wl,--defsym=gpioinc=0x803e0A
-LDFLAGS += -Wl,--defsym=adccnt=0x803e0B
-LDFLAGS += -Wl,--defsym=adcval=0x803e0C
+LDFLAGS += -Wl,--defsym=tcb0errcnt=0x803e00
+LDFLAGS += -Wl,--defsym=tcb1errcnt=0x803e01
+LDFLAGS += -Wl,--defsym=tcb0val=0x803e02
+LDFLAGS += -Wl,--defsym=tcb1val=0x803e06
+LDFLAGS += -Wl,--defsym=gpioina=0x803e0A
+LDFLAGS += -Wl,--defsym=gpioinb=0x803e0B
+LDFLAGS += -Wl,--defsym=gpioinc=0x803e0C
+LDFLAGS += -Wl,--defsym=adccnt=0x803e0D
+LDFLAGS += -Wl,--defsym=adcval=0x803e0E
 LDFLAGS += -Wl,--defsym=tcb0buff=0x803e30
 LDFLAGS += -Wl,--defsym=tcb1buff=0x803e34
 LDFLAGS += -Wl,--defsym=adcbuff=0x803e3C

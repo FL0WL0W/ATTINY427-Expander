@@ -32,9 +32,9 @@ To setup anlog pin reader. send this command
 0x1C //address low
 0xE0 //enable analog pins 5-7
 0x01 //analog enable pins 8, 10-15
-0x8F // analog accumulate to 16 bits and reset accumulator
+0x8F //analog accumulate to 16 bits and reset accumulator
 ```
-Setup and start the ADC
+Setup and start the ADC (See ATTiny427 datasheet for more information)
 ```
 0x85 //write 5 bytes to 16 bit address
 0x06 //address high
@@ -50,8 +50,32 @@ Setup and start the ADC
 0x00 //no accumulation, accumulation done in software so the readings are evenly spaced
 0x11 //single 12 bit mode and start
 ```
-Read the result at address 0x3e0C. There is also a rolling sample counter at 0x3e0B
-
+Read the result at address 0x340E. There is also a rolling sample counter at 0x340D
+## PWM Reader
+Results for Timer B capture interrupts are stored here
+```
+0x3402 TCB0_CNT
+0x3404 TCB0_CCMP
+0x3406 TCB1_CNT
+0x3408 TCB1_CCMP
+```
+Refer to datasheet for how to setup Timer B
+## SENT Reader
+Timer B can be setup to parse incoming SENT data from a sensor
+To setup SENT pin reader. send this command
+```
+0x81 //write 1 bytes to 8 bit address with high byte = 0
+0x1E //address low
+0x60 //This is shared with AnalogAccumulate register. bit 5 and 6 are the SENT decoder enabled for Timer B 0 and 1 respectively
+     //Care should be taken to not overwrite any of the analog enable bits.
+```
+Results are stored here 
+```
+0x3400 TCB0_ErrorCount
+0x3401 TCB1_ErrorCount
+0x3402 TCB0_SENT
+0x3406 TCB1_SENT
+```
 ## Troubleshooting
 ### No response
 If writing to the PORT_DIR register. make sure the MISO line is set as output. MISO is PA2 or PC1 if using alternate SPI

@@ -46,8 +46,10 @@
 #define adcgpr r18
 ;registers used for general purpose in adc interrupt
 
+#define tcbvalreg0 r14
+#define tcbvalreg1 r15
 #define tcbgpr0 r18
-#define tcbgpr1 r14
+#define tcbgpr1 r19
 
 #define tcb0syncl r8
 #define tcb0synch r9
@@ -56,9 +58,11 @@
 #define tcb1synch r11
 #define tcb1state r13
 
-#define maingpr0 r19
+#define maingpr0 r20
 
 .data
+.comm tcb0errcnt, 1
+.comm tcb1errcnt, 1
 .comm tcb0val, 4
 .comm tcb1val, 4
 .comm gpioina, 1
@@ -320,7 +324,7 @@ ADC0PASSCHECKENABLED:
     MOV ZL, adcstate
     ANDI ZL, 0x0F
     LSL ZL ; * 2
-    ADIW ZL, 0x0C; lo8(adcval) for some reason compiler complains using lo8
+    ADIW ZL, 0x0E; lo8(adcval) for some reason compiler complains using lo8
 
     ; load and add
     LD adcgpr, Z+
@@ -418,7 +422,7 @@ ADC0CLEARACCUMULATE:
     MOV ZL, adcstate
     ANDI ZL, 0x0F
     LSL ZL ; * 2
-    ADIW ZL, 0x0D; lo8(adcval) + 1 for some reason compiler complains using lo8
+    ADIW ZL, 0x0F; lo8(adcval) + 1 for some reason compiler complains using lo8
     RJMP ADC0CLEARACCUMULATERETURN
 
 .global TCB0_INT_vect
@@ -444,63 +448,45 @@ TCB0_INT_vect:
     OUT CPU_SREG, lvl0SREG
     RETI
 
-SENTTCB0COPYBUFF:
-    LDI ZH, hi8(tcb0val)
-    LDI ZL, lo8(tcb0val)
-    ; tcb0val = tcb0buff
-    LDS tcbgpr0, tcb0buff
-    RCALL TCBVALWRITE
-    LDS tcbgpr0, tcb0buff+1
-    RCALL TCBVALWRITE
-    LDS tcbgpr0, tcb0buff+2
-    RCALL TCBVALWRITE
-    LDS tcbgpr0, tcb0buff+3
-    RCALL TCBVALWRITE
-    MOV tcb0state, zero
-    MOV tcb0synch, zero
-    MOV tcb0syncl, zero
-    LDS ZL, TCB0_CCMPL
-    LDS ZH, TCB0_CCMPH
-    STS tcb0previouspulse, ZL
-    STS tcb0previouspulse+1, ZH 
-    LDI ZL, 0b00000011
-    STS TCB0_INTFLAGS, ZL
-    OUT CPU_SREG, lvl0SREG
-    RETI
-
 SENTTCB0:
-    ; check if state = 8. If so, this is pause pulse, copy buffer to value
+    LDS tcbvalreg0, TCB0_CCMPL
+    LDS tcbvalreg1, TCB0_CCMPH
+    ; check if state = 8. If so, this is pause/sync pulse, copy buffer to value
     SBRC tcb0state, 3
     RJMP SENTTCB0COPYBUFF
     ; check if there was an overflow. if so, disregard this pulse, it's probably a pause pulse not caught by state
     LDS ZL, TCB0_INTFLAGS
     SBRC ZL, 1
     RJMP SENTTCB0RETURN
+    ; check if sync pulse is 0
     CP tcb0synch, zero
     CPC tcb0syncl, zero
     BRNE SENTTCB0SYNCED
     RJMP SENTTCB0SYNCTOOSMALL
 SENTTCB0SYNCED:
-    LDS ZL, TCB0_CCMPL
-    LDS ZH, TCB0_CCMPH
-    ; subtract 6.5 Ticks
-    SUB ZL, tcb0syncl
-    SBC ZH, tcb0synch
-    SUB ZL, tcb0syncl
-    SBC ZH, tcb0synch
-    SUB ZL, tcb0syncl
-    SBC ZH, tcb0synch
-    SUB ZL, tcb0syncl
-    SBC ZH, tcb0synch
-    SUB ZL, tcb0syncl
-    SBC ZH, tcb0synch
-    SUB ZL, tcb0syncl
-    SBC ZH, tcb0synch
+    MOV ZL, tcbvalreg0
+    MOV ZH, tcbvalreg1
+    ; subtract 11.5 Ticks
     MOV tcbgpr1, tcb0syncl
+    LSL tcbgpr1
+    ROL tcb0synch
+    LSL tcbgpr1
+    ROL tcb0synch
+    LSL tcbgpr1
+    ROL tcb0synch
+    SUB ZL, tcbgpr1
+    SBC ZH, tcb0synch
     LSR tcb0synch
     ROR tcbgpr1
     SUB ZL, tcbgpr1
     SBC ZH, tcb0synch
+    LSR tcb0synch
+    LSR tcb0synch
+    MOV tcbgpr1, tcb0syncl
+    LSR tcb0synch
+    ROR tcbgpr1
+    ADD ZL, tcbgpr1
+    ADC ZH, tcb0synch
     LSL tcbgpr1
     ROL tcb0synch
     ; if negative, tcb0sync is too big
@@ -514,7 +500,7 @@ SENTTCB0CNT:
     SBC ZH, tcb0synch
     INC tcbgpr1
     ; if tcbgpr1 < 16, continue
-    SBRC tcbgpr1, 4
+    SBRS tcbgpr1, 4
     RJMP SENTTCB0CNT
     RJMP SENTTCB0SYNCTOOSMALL
 SENTTCB0CNTCMPLT:
@@ -522,7 +508,7 @@ SENTTCB0CNTCMPLT:
     LSR ZL
     LDI ZH, hi8(tcb0buff)
     ADIW Z, 0x30; lo8(tcb0buff)
-    SBRS tcb0state, 1
+    SBRS tcb0state, 0
     RJMP SENTTCB0LOW
     LD tcbgpr0, Z
     ANDI tcbgpr0, 0x0F
@@ -530,58 +516,91 @@ SENTTCB0CNTCMPLT:
     OR tcbgpr1, tcbgpr0
 SENTTCB0LOW:
     ST Z, tcbgpr1
-
-
     INC tcb0state
-    LDS ZL, TCB0_CCMPL
-    LDS ZH, TCB0_CCMPH
-    STS tcb0previouspulse, ZL
-    STS tcb0previouspulse+1, ZH
+    STS tcb0previouspulse, tcbvalreg0
+    STS tcb0previouspulse+1, tcbvalreg1
 SENTTCB0RETURN:
     LDI ZL, 0b00000011
     STS TCB0_INTFLAGS, ZL
     OUT CPU_SREG, lvl0SREG
     RETI
 
-SENTTCB0SYNCTOOSMALL:
-    ; getting here means we need to use this pulse as sync pulse
-    LDS ZL, TCB0_CCMPL
-    LDS ZH, TCB0_CCMPH
-    STS tcb0previouspulse, ZL
-    STS tcb0previouspulse+1, ZH
-    RCALL DIVIDEZBY56
-    MOVW tcb0syncl, Z
+SENTTCB0COPYBUFF:
+    LDI ZH, hi8(tcb0val)
+    LDI ZL, lo8(tcb0val)
+    ; tcb0val = tcb0buff
+    LDS tcbgpr0, tcb0buff
+    RCALL TCBVALWRITE
+    LDS tcbgpr0, tcb0buff+1
+    RCALL TCBVALWRITE
+    LDS tcbgpr0, tcb0buff+2
+    RCALL TCBVALWRITE
+    LDS tcbgpr0, tcb0buff+3
+    RCALL TCBVALWRITE
     MOV tcb0state, zero
-    RJMP SENTTCB0RETURN
+    RJMP SENTTCB0SYNCTOOSMALL
+
 SENTTCB0SYNCTOOBIG:
     ; getting here means we need to use previous pulse as sync pulse
     LDS ZL, tcb0previouspulse
     LDS ZH, tcb0previouspulse+1
+    PUSH r0
+    PUSH r1
     RCALL DIVIDEZBY56
-    MOVW tcb0syncl, Z
+    MOVW tcb0syncl, r0
+    POP r1
+    POP r0
+    LDS ZL, tcb0errcnt
+    LSR tcb0state
+    CPSE tcb0state, zero
+    INC ZL
+    STS tcb0errcnt, ZL
     MOV tcb0state, zero
     RJMP SENTTCB0SYNCED
+SENTTCB0SYNCTOOSMALL:
+    ; getting here means we need to use this pulse as sync pulse
+    MOV ZL, tcbvalreg0
+    MOV ZH, tcbvalreg1
+    STS tcb0previouspulse, ZL
+    STS tcb0previouspulse+1, ZH
+    PUSH r0
+    PUSH r1
+    RCALL DIVIDEZBY56
+    MOVW tcb0syncl, r0
+    POP r1
+    POP r0
+    LDS ZL, tcb0errcnt
+    LSR tcb0state
+    CPSE tcb0state, zero
+    INC ZL
+    STS tcb0errcnt, ZL
+    MOV tcb0state, zero
+    LDI ZL, 0b00000011
+    STS TCB0_INTFLAGS, ZL
+    OUT CPU_SREG, lvl0SREG
+    RETI
 
 DIVIDEZBY56:
-    MOV tcbgpr0, ZL
-    MOV ZL, ZH
-    SWAP ZL
-    ANDI ZL, 0x0F
-    LSR ZH
-    ROR tcbgpr0
-    ADD ZL, ZH
-    LSR ZH
-    ROR tcbgpr0
+    ;/16 rounded
+    ADIW Z, 8
     SWAP ZH
-    SWAP tcbgpr0
-    ANDI tcbgpr0, 0x0F
-    ADD ZL, tcbgpr0
-    ADC ZH, zero
+    SWAP ZL
+    ANDI ZL, 0xF
     MOV tcbgpr0, ZH
     ANDI tcbgpr0, 0xF0
-    ADD ZL, tcbgpr0
-    ADC ZH, zero
-    ANDI ZH, 0x0F
+    OR ZL, tcbgpr0
+    ANDI ZH, 0xF
+    ;*73/256 rounded
+    LDI tcbgpr0, 73
+    MUL ZL, tcbgpr0
+    LDI ZL, 0x80
+    ADD r0, ZL
+    ADC r1, zero
+    MOV ZL, r1
+    LDI tcbgpr0, 73
+    MUL ZH, tcbgpr0
+    ADD r0, ZL
+    ADC r1, zero
     RET
 
 TCBVALWRITE:
@@ -596,6 +615,132 @@ TCBVALWRITE:
     RET
 
 SENTTCB1:
+    LDS tcbvalreg0, TCB1_CCMPL
+    LDS tcbvalreg1, TCB1_CCMPH
+    ; check if state = 8. If so, this is pause/sync pulse, copy buffer to value
+    SBRC tcb1state, 3
+    RJMP SENTTCB1COPYBUFF
+    ; check if there was an overflow. if so, disregard this pulse, it's probably a pause pulse not caught by state
+    LDS ZL, TCB1_INTFLAGS
+    SBRC ZL, 1
+    RJMP SENTTCB1RETURN
+    ; check if sync pulse is 0
+    CP tcb1synch, zero
+    CPC tcb1syncl, zero
+    BRNE SENTTCB1SYNCED
+    RJMP SENTTCB1SYNCTOOSMALL
+SENTTCB1SYNCED:
+    MOV ZL, tcbvalreg0
+    MOV ZH, tcbvalreg1
+    ; subtract 11.5 Ticks
+    MOV tcbgpr1, tcb1syncl
+    LSL tcbgpr1
+    ROL tcb1synch
+    LSL tcbgpr1
+    ROL tcb1synch
+    LSL tcbgpr1
+    ROL tcb1synch
+    SUB ZL, tcbgpr1
+    SBC ZH, tcb1synch
+    LSR tcb1synch
+    ROR tcbgpr1
+    SUB ZL, tcbgpr1
+    SBC ZH, tcb1synch
+    LSR tcb1synch
+    LSR tcb1synch
+    MOV tcbgpr1, tcb1syncl
+    LSR tcb1synch
+    ROR tcbgpr1
+    ADD ZL, tcbgpr1
+    ADC ZH, tcb1synch
+    LSL tcbgpr1
+    ROL tcb1synch
+    ; if negative, tcb1sync is too big
+    BRCS SENTTCB1SYNCTOOBIG
+    MOV tcbgpr1, zero
+    SUB ZL, tcb1syncl
+    SBC ZH, tcb1synch
+SENTTCB1CNT:
+    BRCS SENTTCB1CNTCMPLT
+    SUB ZL, tcb1syncl
+    SBC ZH, tcb1synch
+    INC tcbgpr1
+    ; if tcbgpr1 < 16, continue
+    SBRS tcbgpr1, 4
+    RJMP SENTTCB1CNT
+    RJMP SENTTCB1SYNCTOOSMALL
+SENTTCB1CNTCMPLT:
+    MOV ZL, tcb1state
+    LSR ZL
+    LDI ZH, hi8(tcb1buff)
+    ADIW Z, 0x34; lo8(tcb1buff)
+    SBRS tcb1state, 0
+    RJMP SENTTCB1LOW
+    LD tcbgpr0, Z
+    ANDI tcbgpr0, 0x0F
+    SWAP tcbgpr1
+    OR tcbgpr1, tcbgpr0
+SENTTCB1LOW:
+    ST Z, tcbgpr1
+    INC tcb1state
+    STS tcb1previouspulse, tcbvalreg0
+    STS tcb1previouspulse+1, tcbvalreg1
+SENTTCB1RETURN:
+    LDI ZL, 0b00000011
+    STS TCB1_INTFLAGS, ZL
+    OUT CPU_SREG, lvl0SREG
+    RETI
+
+SENTTCB1COPYBUFF:
+    LDI ZH, hi8(tcb1val)
+    LDI ZL, lo8(tcb1val)
+    ; tcb1val = tcb1buff
+    LDS tcbgpr0, tcb1buff
+    RCALL TCBVALWRITE
+    LDS tcbgpr0, tcb1buff+1
+    RCALL TCBVALWRITE
+    LDS tcbgpr0, tcb1buff+2
+    RCALL TCBVALWRITE
+    LDS tcbgpr0, tcb1buff+3
+    RCALL TCBVALWRITE
+    MOV tcb1state, zero
+    RJMP SENTTCB1SYNCTOOSMALL
+
+SENTTCB1SYNCTOOBIG:
+    ; getting here means we need to use previous pulse as sync pulse
+    LDS ZL, tcb1previouspulse
+    LDS ZH, tcb1previouspulse+1
+    PUSH r0
+    PUSH r1
+    RCALL DIVIDEZBY56
+    MOVW tcb1syncl, r0
+    POP r1
+    POP r0
+    LDS ZL, tcb1errcnt
+    LSR tcb1state
+    CPSE tcb1state, zero
+    INC ZL
+    STS tcb1errcnt, ZL
+    MOV tcb1state, zero
+    RJMP SENTTCB1SYNCED
+SENTTCB1SYNCTOOSMALL:
+    ; getting here means we need to use this pulse as sync pulse
+    MOV ZL, tcbvalreg0
+    MOV ZH, tcbvalreg1
+    STS tcb1previouspulse, ZL
+    STS tcb1previouspulse+1, ZH
+    PUSH r0
+    PUSH r1
+    RCALL DIVIDEZBY56
+    MOVW tcb1syncl, r0
+    POP r1
+    POP r0
+    LDS ZL, tcb1errcnt
+    LSR tcb1state
+    CPSE tcb1state, zero
+    INC ZL
+    STS tcb1errcnt, ZL
+    MOV tcb1state, zero
     LDI ZL, 0b00000011
     STS TCB1_INTFLAGS, ZL
     OUT CPU_SREG, lvl0SREG
@@ -604,7 +749,7 @@ SENTTCB1:
 .global TCB1_INT_vect
 TCB1_INT_vect:
     IN lvl0SREG, CPU_SREG
-    SBIC SENTenable, SENTenableTCB0Bit
+    SBIC SENTenable, SENTenableTCB1Bit
     RJMP SENTTCB1
     ; Z = &tcb1val
     LDI ZH, hi8(tcb1val)
@@ -644,6 +789,9 @@ main:
     MOV tcb1syncl, zero
     MOV tcb1synch, zero
     MOV tcb1state, zero
+    ; make ADC lower priority then TCB1
+    LDI maingpr0, ADC0_RESRDY_vect_num
+    STS CPUINT_LVL0PRI, maingpr0
     ; initialize SPI
 #if defined(SPI_ALT)
     LDI maingpr0, 0b00000001
