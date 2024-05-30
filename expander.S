@@ -405,8 +405,8 @@ ADC0CLEARACCUMULATE:
     ST Z+, adcvalreg0
     ST Z+, adcvalreg1
     ; adcvalreg0/7 *= analogaccumulate + 1
-    PUSH r0
-    PUSH r1
+    ; PUSH r0
+    ; PUSH r1
     IN ZH, analogaccumulate
     ANDI ZH, 0b00001111
     INC ZH
@@ -415,8 +415,8 @@ ADC0CLEARACCUMULATE:
     MUL adcvalreg0, ZH
     ADD r1, ZL
     MOVW adcvalreg0, r0
-    POP r1
-    POP r0
+    ; POP r1
+    ; POP r0
     ; Z = adcval + (adcstate & 0x0F) * 2
     LDI ZH, hi8(adcval)
     MOV ZL, adcstate
@@ -550,12 +550,12 @@ SENTTCB0SYNCTOOBIG:
     ; getting here means we need to use previous pulse as sync pulse
     LDS ZL, tcb0previouspulse
     LDS ZH, tcb0previouspulse+1
-    PUSH r0
-    PUSH r1
+    ; PUSH r0
+    ; PUSH r1
     RCALL DIVIDEZBY56
     MOVW tcb0syncl, r0
-    POP r1
-    POP r0
+    ; POP r1
+    ; POP r0
     MOV tcb0state, zero
     RJMP SENTTCB0SYNCED
 SENTTCB0SYNCTOOSMALL:
@@ -564,12 +564,12 @@ SENTTCB0SYNCTOOSMALL:
     MOV ZH, tcbvalreg1
     STS tcb0previouspulse, ZL
     STS tcb0previouspulse+1, ZH
-    PUSH r0
-    PUSH r1
+    ; PUSH r0
+    ; PUSH r1
     RCALL DIVIDEZBY56
     MOVW tcb0syncl, r0
-    POP r1
-    POP r0
+    ; POP r1
+    ; POP r0
     MOV tcb0state, zero
     LDI ZL, 0b00000011
     STS TCB0_INTFLAGS, ZL
@@ -709,12 +709,12 @@ SENTTCB1SYNCTOOBIG:
     ; getting here means we need to use previous pulse as sync pulse
     LDS ZL, tcb1previouspulse
     LDS ZH, tcb1previouspulse+1
-    PUSH r0
-    PUSH r1
+    ; PUSH r0
+    ; PUSH r1
     RCALL DIVIDEZBY56
     MOVW tcb1syncl, r0
-    POP r1
-    POP r0
+    ; POP r1
+    ; POP r0
     MOV tcb1state, zero
     RJMP SENTTCB1SYNCED
 SENTTCB1SYNCTOOSMALL:
@@ -723,12 +723,12 @@ SENTTCB1SYNCTOOSMALL:
     MOV ZH, tcbvalreg1
     STS tcb1previouspulse, ZL
     STS tcb1previouspulse+1, ZH
-    PUSH r0
-    PUSH r1
+    ; PUSH r0
+    ; PUSH r1
     RCALL DIVIDEZBY56
     MOVW tcb1syncl, r0
-    POP r1
-    POP r0
+    ; POP r1
+    ; POP r0
     MOV tcb1state, zero
     LDI ZL, 0b00000011
     STS TCB1_INTFLAGS, ZL
