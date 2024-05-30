@@ -54,8 +54,10 @@ Read the result at address 0x340E. There is also a rolling sample counter at 0x3
 ## PWM Reader
 Results for Timer B capture interrupts are stored here
 ```
-0x3402 TCB0_CNT
-0x3404 TCB0_CCMP
+0x3400 TCB0_Count
+0x3401 TCB0_CNT
+0x3403 TCB0_CCMP
+0x3405 TCB1_Count
 0x3406 TCB1_CNT
 0x3408 TCB1_CCMP
 ```
@@ -71,9 +73,9 @@ To setup SENT pin reader. send this command
 ```
 Results are stored here 
 ```
-0x3400 TCB0_ErrorCount
-0x3401 TCB1_ErrorCount
-0x3402 TCB0_SENT
+0x3400 TCB0_Count
+0x3401 TCB0_SENT
+0x3405 TCB1_Count
 0x3406 TCB1_SENT
 ```
 ## Troubleshooting

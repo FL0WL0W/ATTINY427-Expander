@@ -259,9 +259,9 @@ EXTMEMOPTS =
 #    --cref:    add cross reference to  map file
 LDFLAGS = -Wl,-Map=$(TARGET).map,--cref
 LDFLAGS += -Wl,-Tdata=0x803FA0
-LDFLAGS += -Wl,--defsym=tcb0errcnt=0x803e00
-LDFLAGS += -Wl,--defsym=tcb1errcnt=0x803e01
-LDFLAGS += -Wl,--defsym=tcb0val=0x803e02
+LDFLAGS += -Wl,--defsym=tcb0cnt=0x803e00
+LDFLAGS += -Wl,--defsym=tcb0val=0x803e01
+LDFLAGS += -Wl,--defsym=tcb1cnt=0x803e05
 LDFLAGS += -Wl,--defsym=tcb1val=0x803e06
 LDFLAGS += -Wl,--defsym=gpioina=0x803e0A
 LDFLAGS += -Wl,--defsym=gpioinb=0x803e0B

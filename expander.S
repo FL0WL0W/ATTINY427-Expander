@@ -61,9 +61,9 @@
 #define maingpr0 r20
 
 .data
-.comm tcb0errcnt, 1
-.comm tcb1errcnt, 1
+.comm tcb0cnt, 1
 .comm tcb0val, 4
+.comm tcb1cnt, 1
 .comm tcb1val, 4
 .comm gpioina, 1
 .comm gpioinb, 1
@@ -430,6 +430,9 @@ TCB0_INT_vect:
     IN lvl0SREG, CPU_SREG
     SBIC SENTenable, SENTenableTCB0Bit
     RJMP SENTTCB0
+    LDS ZL, tcb0cnt
+    INC ZL
+    STS tcb0cnt, ZL
     ; Z = &tcb0val
     LDI ZH, hi8(tcb0val)
     LDI ZL, lo8(tcb0val)
@@ -526,6 +529,9 @@ SENTTCB0RETURN:
     RETI
 
 SENTTCB0COPYBUFF:
+    LDS ZL, tcb0cnt
+    INC ZL
+    STS tcb0cnt, ZL
     LDI ZH, hi8(tcb0val)
     LDI ZL, lo8(tcb0val)
     ; tcb0val = tcb0buff
@@ -550,11 +556,6 @@ SENTTCB0SYNCTOOBIG:
     MOVW tcb0syncl, r0
     POP r1
     POP r0
-    LDS ZL, tcb0errcnt
-    LSR tcb0state
-    CPSE tcb0state, zero
-    INC ZL
-    STS tcb0errcnt, ZL
     MOV tcb0state, zero
     RJMP SENTTCB0SYNCED
 SENTTCB0SYNCTOOSMALL:
@@ -569,11 +570,6 @@ SENTTCB0SYNCTOOSMALL:
     MOVW tcb0syncl, r0
     POP r1
     POP r0
-    LDS ZL, tcb0errcnt
-    LSR tcb0state
-    CPSE tcb0state, zero
-    INC ZL
-    STS tcb0errcnt, ZL
     MOV tcb0state, zero
     LDI ZL, 0b00000011
     STS TCB0_INTFLAGS, ZL
@@ -692,6 +688,9 @@ SENTTCB1RETURN:
     RETI
 
 SENTTCB1COPYBUFF:
+    LDS ZL, tcb1cnt
+    INC ZL
+    STS tcb1cnt, ZL
     LDI ZH, hi8(tcb1val)
     LDI ZL, lo8(tcb1val)
     ; tcb1val = tcb1buff
@@ -716,11 +715,6 @@ SENTTCB1SYNCTOOBIG:
     MOVW tcb1syncl, r0
     POP r1
     POP r0
-    LDS ZL, tcb1errcnt
-    LSR tcb1state
-    CPSE tcb1state, zero
-    INC ZL
-    STS tcb1errcnt, ZL
     MOV tcb1state, zero
     RJMP SENTTCB1SYNCED
 SENTTCB1SYNCTOOSMALL:
@@ -735,11 +729,6 @@ SENTTCB1SYNCTOOSMALL:
     MOVW tcb1syncl, r0
     POP r1
     POP r0
-    LDS ZL, tcb1errcnt
-    LSR tcb1state
-    CPSE tcb1state, zero
-    INC ZL
-    STS tcb1errcnt, ZL
     MOV tcb1state, zero
     LDI ZL, 0b00000011
     STS TCB1_INTFLAGS, ZL
@@ -751,6 +740,9 @@ TCB1_INT_vect:
     IN lvl0SREG, CPU_SREG
     SBIC SENTenable, SENTenableTCB1Bit
     RJMP SENTTCB1
+    LDS ZL, tcb1cnt
+    INC ZL
+    STS tcb1cnt, ZL
     ; Z = &tcb1val
     LDI ZH, hi8(tcb1val)
     LDI ZL, lo8(tcb1val)
