@@ -28,7 +28,7 @@ MISO:   |   N/A   |   N/A   |   N/A   |   N/A   |   N/A   |  Read   |  Read   | 
 ## Analog Reader
 To setup anlog pin reader. send this command
 ```
-0x83 //write 3 bytes to 8 bit address with high byte = 0
+0xE3 //write 3 bytes to 8 bit address with high byte = 0
 0x1C //address low
 0xE0 //enable analog pins 5-7
 0x01 //analog enable pins 8, 10-15
