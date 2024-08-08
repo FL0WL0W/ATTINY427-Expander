@@ -25,14 +25,14 @@
 #define lvl0SREG r4
 ;register used to store SREG during lvl0 interrupt
 
-#define spistate r16
+#define commrxstate r16
 ; bit 4 read address
 ; bit 5 set address high to 0
 ; bit 6 read address low
 ; bit 7 write
-#define spilen r17
+#define commtxstate r17
 ; length left to be read for reading/writing. 0-31
-#define spigpr r5
+#define commgpr r5
 ;register used for general purpose in spi interrupt
 
 #define adcstate r6
@@ -79,66 +79,93 @@ tcb1previouspulse:
 .short 0
 
 .text
+#ifdef COMM_SPI
+#define COMM_TXREG SPI0_DATA
+#define COMM_RXREG SPI0_DATA
 .global SPI0_INT_vect
 SPI0_INT_vect:
+#else
+#ifdef COMM_USART1
+#define COMM_TXREG USART1_TXDATAL
+#define COMM_RXREG USART1_RXDATAL
+.global USART1_RXC_vect
+USART0_RXC_vect:
+#else
+#define COMM_TXREG USART0_TXDATAL
+#define COMM_RXREG USART0_RXDATAL
+.global USART0_RXC_vect
+USART0_RXC_vect:
+#endif
+#endif
     IN lvl1SREG, CPU_SREG
-    CP spilen, zero
-    BREQ SPIREADLENECHO
-    SBRS spistate, 4
-    RJMP SPIREADADDR
-    SBRC spistate, 7
-    RJMP SPIWRITE
-SPIREAD:
-    LD spigpr, X+
-    STS SPI0_DATA, spigpr
-    DEC spilen
-    CP spilen, zero
-    BREQ SPIREADLEN
-    LDS spigpr, SPI0_DATA
+    CPSE commrxstate, zero
+    RJMP COMMRXPROCESS
+COMMREADCMD:
+    LDS commrxstate, COMM_RXREG
+    CPSE commtxstate, zero
+    RJMP COMMTXPROCESS
+    SBRS commrxstate, 7
+    STS COMM_TXREG, commrxstate
+    SBRC commrxstate, 7
+    STS COMM_TXREG, zero
     OUT CPU_SREG, lvl1SREG
     RETI
 
-SPIWRITE:
-    LD spigpr, X
-    STS SPI0_DATA, spigpr
-    LDS spigpr, SPI0_DATA
-    ST X+, spigpr
-    DEC spilen
+COMMTXPROCESS:
+    LD commgpr, X+
+    STS COMM_TXREG, commgpr
+    DEC commtxstate
     OUT CPU_SREG, lvl1SREG
     RETI
 
-SPIREADLEN:
-    LDS spilen, SPI0_DATA
-    MOV spistate, spilen
-    ANDI spilen, 0b00011111
-    ANDI spistate, 0b11100000
+COMMRXPROCESS:
+    SBRS commrxstate, 4
+    RJMP COMMREADADDR
+    SBRC commrxstate, 7
+    RJMP COMMWRITE
+    MOVW X, Y
+    MOV commtxstate, commrxstate
+    ANDI commtxstate, 0b00001111
+    RJMP COMMREADCMD
+
+COMMWRITE:
+    LDS commgpr, COMM_RXREG
+    ST Y+, commgpr
+    DEC commrxstate
+    ANDI commrxstate, 0b00001111
+    CPSE commrxstate, zero
+    ORI commrxstate, 0b10010000
+    CPSE commtxstate, zero
+    RJMP COMMTXPROCESS
+    STS COMM_TXREG, zero
     OUT CPU_SREG, lvl1SREG
     RETI
 
-SPIREADLENECHO:
-    LDS spilen, SPI0_DATA
-    STS SPI0_DATA, spilen
-    MOV spistate, spilen
-    ANDI spilen, 0b00011111
-    ANDI spistate, 0b11100000
-    OUT CPU_SREG, lvl1SREG
-    RETI
-
-SPIREADADDR:
-    SBRS spistate, 6
-    RJMP SPIREADADDRH
-    SBRC spistate, 5
+COMMREADADDR:
+    SBRS commrxstate, 6
+    RJMP COMMREADADDRH
+    SBRC commrxstate, 5
     MOV XH, zero
-    LDS XL, SPI0_DATA
-    STS SPI0_DATA, XL
-    ORI spistate, 0b00010000
+    LDS XL, COMM_RXREG
+    ORI commrxstate, 0b00010000
+    CPSE commtxstate, zero
+    RJMP COMMTXPROCESS
+    SBRS commrxstate, 7
+    STS COMM_TXREG, XL
+    SBRC commrxstate, 7
+    STS COMM_TXREG, zero
     OUT CPU_SREG, lvl1SREG
     RETI
 
-SPIREADADDRH:
-    LDS XH, SPI0_DATA
-    STS SPI0_DATA, XH
-    ORI spistate, 0b01000000
+COMMREADADDRH:
+    LDS XH, COMM_RXREG
+    ORI commrxstate, 0b01000000
+    CPSE commtxstate, zero
+    RJMP COMMTXPROCESS
+    SBRS commrxstate, 7
+    STS COMM_TXREG, XH
+    SBRC commrxstate, 7
+    STS COMM_TXREG, zero
     OUT CPU_SREG, lvl1SREG
     RETI
 
@@ -154,7 +181,8 @@ ADC0_RESRDY_vect:
     ADC ZH, zero
     IJMP
 ADC0SETSAMPLE:
-#if !defined(SPI_ALT)
+#ifdef COMM_SPI
+#ifdef COMM_ALT
 ADC0SETSAMPLEBEGIN:
     SBIC analogenable0, 1
     RJMP ADC0SETSAMPLE1
@@ -175,6 +203,29 @@ ADC0SETSAMPLEBEGIN:
     NOP
 ADC0SETSAMPLEBEGIN:
 #endif
+#else
+#if (defined(COMM_USART1) && !defined(COMM_ALT)) || (!defined(COMM_USART1) && defined(COMM_ALT))
+    NOP
+    NOP
+    NOP
+    NOP
+ADC0SETSAMPLEBEGIN:
+    SBIC analogenable0, 3
+    RJMP ADC0SETSAMPLE3
+    SBIC analogenable0, 4
+    RJMP ADC0SETSAMPLE4
+#else
+ADC0SETSAMPLEBEGIN:
+    SBIC analogenable0, 1
+    RJMP ADC0SETSAMPLE1
+    SBIC analogenable0, 2
+    RJMP ADC0SETSAMPLE2
+    SBIC analogenable0, 3
+    RJMP ADC0SETSAMPLE3
+    SBIC analogenable0, 4
+    RJMP ADC0SETSAMPLE4
+#endif
+#endif
     SBIC analogenable0, 5
     RJMP ADC0SETSAMPLE5
     SBIC analogenable0, 6
@@ -189,7 +240,17 @@ ADC0SETSAMPLEBEGIN:
     RJMP ADC0SETSAMPLE10
     SBIC analogenable1, 3
     RJMP ADC0SETSAMPLE11
-#if !defined(SPI_ALT)
+#ifdef COMM_SPI
+#ifdef COMM_ALT
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+#else
     SBIC analogenable1, 4
     RJMP ADC0SETSAMPLE12
     SBIC analogenable1, 5
@@ -198,15 +259,27 @@ ADC0SETSAMPLEBEGIN:
     RJMP ADC0SETSAMPLE14
     SBIC analogenable1, 7
     RJMP ADC0SETSAMPLE15
+#endif
 #else
+#if defined(COMM_USART1) && defined(COMM_ALT)
+    SBIC analogenable1, 4
+    RJMP ADC0SETSAMPLE12
     NOP
     NOP
     NOP
     NOP
-    NOP
-    NOP
-    NOP
-    NOP
+    SBIC analogenable1, 7
+    RJMP ADC0SETSAMPLE15
+#else
+    SBIC analogenable1, 4
+    RJMP ADC0SETSAMPLE12
+    SBIC analogenable1, 5
+    RJMP ADC0SETSAMPLE13
+    SBIC analogenable1, 6
+    RJMP ADC0SETSAMPLE14
+    SBIC analogenable1, 7
+    RJMP ADC0SETSAMPLE15
+#endif
 #endif
     LDI ZL, 0b10000000
     OR adcstate, ZL
@@ -339,7 +412,7 @@ ADC0CHECK:
     CLI
     CP ZL, XL
     CPC ZH, XH
-    CPSE spilen, zero
+    CPSE commtxstate, zero
     BREQ ADC0CHECK
     ST -Z, adcvalreg0
     ST Z+, adcvalreg0
@@ -604,7 +677,7 @@ TCBVALWRITE:
     CLI
     CP ZL, XL
     CPC ZH, XH
-    CPSE spilen, zero
+    CPSE commtxstate, zero
     BREQ TCBVALWRITE
     ST Z+, tcbgpr0
     SEI
@@ -773,8 +846,8 @@ main:
     MOV zero, maingpr0
     MOV adcstate, zero
     MOV adcacc, zero
-    MOV spistate, zero
-    MOV spilen, zero
+    MOV commrxstate, zero
+    MOV commtxstate, zero
     MOV tcb0syncl, zero
     MOV tcb0synch, zero
     MOV tcb0state, zero
@@ -785,7 +858,8 @@ main:
     LDI maingpr0, ADC0_RESRDY_vect_num
     STS CPUINT_LVL0PRI, maingpr0
     ; initialize SPI
-#if defined(SPI_ALT)
+#ifdef COMM_SPI
+#ifdef COMM_ALT
     LDI maingpr0, 0b00000001
     STS PORTMUX_SPIROUTEA, maingpr0
     SBI VPORTC_DIR, 1
@@ -799,6 +873,11 @@ main:
     STS SPI0_INTCTRL, maingpr0
     LDI maingpr0, SPI0_INT_vect_num
     STS CPUINT_LVL1VEC, maingpr0
+#else
+#ifdef COMM_USART1
+#else
+#endif
+#endif
     SEI
 mainloop:
     IN maingpr0, VPORTA_IN
