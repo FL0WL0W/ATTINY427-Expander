@@ -89,7 +89,7 @@ SPI0_INT_vect:
 #define COMM_TXREG USART1_TXDATAL
 #define COMM_RXREG USART1_RXDATAL
 .global USART1_RXC_vect
-USART0_RXC_vect:
+USART1_RXC_vect:
 #else
 #define COMM_TXREG USART0_TXDATAL
 #define COMM_RXREG USART0_RXDATAL
@@ -875,7 +875,45 @@ main:
     STS CPUINT_LVL1VEC, maingpr0
 #else
 #ifdef COMM_USART1
+#ifdef COMM_ALT
+    LDI maingpr0, 0b00000100
+    STS PORTMUX_USARTROUTEA, maingpr0
+    SBI VPORTC_DIR, 2
 #else
+    SBI VPORTA_DIR, 1
+#endif
+    LDI maingpr0, 0x00
+    STS USART1_BAUDH, maingpr0
+    LDI maingpr0, 0x50
+    STS USART1_BAUDL, maingpr0
+    LDI maingpr0, 0b10000000
+    STS USART1_CTRLA, maingpr0
+    LDI maingpr0, 0b11000010
+    STS USART1_CTRLB, maingpr0
+    LDI maingpr0, 0x03
+    STS USART1_CTRLC, maingpr0
+    LDI maingpr0, USART1_RXC_vect_num
+    STS CPUINT_LVL1VEC, maingpr0
+#else
+#ifdef COMM_ALT
+    LDI maingpr0, 0b00000001
+    STS PORTMUX_USARTROUTEA, maingpr0
+    SBI VPORTB_DIR, 2
+#else
+    SBI VPORTA_DIR, 1
+#endif
+    LDI maingpr0, 0x00
+    STS USART0_BAUDH, maingpr0
+    LDI maingpr0, 0x50
+    STS USART0_BAUDL, maingpr0
+    LDI maingpr0, 0b10000000
+    STS USART0_CTRLA, maingpr0
+    LDI maingpr0, 0b11000010
+    STS USART0_CTRLB, maingpr0
+    LDI maingpr0, 0x03
+    STS USART0_CTRLC, maingpr0
+    LDI maingpr0, USART0_RXC_vect_num
+    STS CPUINT_LVL1VEC, maingpr0
 #endif
 #endif
     SEI
