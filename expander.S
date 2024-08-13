@@ -69,10 +69,10 @@
 .comm gpioinb, 1
 .comm gpioinc, 1
 .comm adccnt, 1
-.comm adcval, 11 * 2
+.comm adcval, 14 * 2
 .comm tcb0buff, 4
 .comm tcb1buff, 4
-.comm adcbuff, 11 * 16 * 2
+.comm adcbuff, 14 * 16 * 2
 tcb0previouspulse:
 .short 0
 tcb1previouspulse:

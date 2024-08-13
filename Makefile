@@ -13,7 +13,7 @@ DEFS =
 #    -Map:      create map file
 #    --cref:    add cross reference to  map file
 LDFLAGS = 
-LDFLAGS += -Wl,-Tdata=0x803FA0
+LDFLAGS += -Wl,-Tdata=0x803FFC
 LDFLAGS += -Wl,--defsym=tcb0cnt=0x803e00
 LDFLAGS += -Wl,--defsym=tcb0val=0x803e01
 LDFLAGS += -Wl,--defsym=tcb1cnt=0x803e05
