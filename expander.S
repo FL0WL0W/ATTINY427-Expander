@@ -120,12 +120,13 @@ COMMTXCMD:
 
 COMMTXCMDCONTINUATION:
     MOV commgpr, commrxstate
-    MOV commtxstate, commrxstate
-    ANDI commtxstate, 0b00001111
-    CLR commrxstate
     CPSE commtxstate, zero
-    RJMP COMMTXPROCESS
+    LD commgpr, X+
+    CPSE commtxstate, zero
+    DEC commtxstate
     STS COMM_TXREG, commgpr
+    ANDI commrxstate, 0b00001111
+    ADD commtxstate, commrxstate
     OUT CPU_SREG, lvl1SREG
     RETI
 
