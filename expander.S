@@ -31,7 +31,6 @@
 ; bit 6 read address low
 ; bit 7 write
 #define commtxstate r17
-; length left to be read for reading/writing. 0-31
 #define commgpr r5
 ;register used for general purpose in spi interrupt
 
@@ -102,12 +101,31 @@ USART0_RXC_vect:
     RJMP COMMRXPROCESS
 COMMREADCMD:
     LDS commrxstate, COMM_RXREG
+    SBRS commrxstate, 7
+    RJMP COMMTXCMD
     CPSE commtxstate, zero
     RJMP COMMTXPROCESS
-    SBRS commrxstate, 7
-    STS COMM_TXREG, commrxstate
-    SBRC commrxstate, 7
     STS COMM_TXREG, zero
+    OUT CPU_SREG, lvl1SREG
+    RETI
+
+COMMTXCMD:
+    SBRC commrxstate, 4
+    RJMP COMMTXCMDCONTINUATION
+    CPSE commtxstate, zero
+    RJMP COMMTXPROCESS
+    STS COMM_TXREG, commrxstate
+    OUT CPU_SREG, lvl1SREG
+    RETI
+
+COMMTXCMDCONTINUATION:
+    MOV commgpr, commrxstate
+    MOV commtxstate, commrxstate
+    ANDI commtxstate, 0b00001111
+    CLR commrxstate
+    CPSE commtxstate, zero
+    RJMP COMMTXPROCESS
+    STS COMM_TXREG, commgpr
     OUT CPU_SREG, lvl1SREG
     RETI
 
@@ -145,7 +163,7 @@ COMMREADADDR:
     SBRS commrxstate, 6
     RJMP COMMREADADDRH
     SBRC commrxstate, 5
-    MOV XH, zero
+    CLR XH
     LDS XL, COMM_RXREG
     ORI commrxstate, 0b00010000
     CPSE commtxstate, zero
@@ -291,7 +309,7 @@ ADC0SETSAMPLEBEGIN:
     INC adcacc
     CPSE ZH, ZL
     RJMP ADC0SETSAMPLEBEGIN
-    MOV adcacc, zero
+    CLR adcacc
     RJMP ADC0SETSAMPLEBEGIN
 ADC0SETSAMPLE1:
     LDI ZL, 1
@@ -432,13 +450,13 @@ ADC0CHECK:
     SBRC adcstate, 6
     CBI analogaccumulate, 7
     ; reset adcstate
-    MOV adcstate, zero
+    CLR adcstate
     ; set adcstate to clear accumulate
     SBIS analogaccumulate, 7
     RJMP ADC0RETURN
     LDI ZL, 0b01000000
     OR adcstate, ZL
-    MOV adcacc, zero
+    CLR adcacc
 
 ADC0RETURN:
     OUT CPU_SREG, lvl0SREG
@@ -567,7 +585,7 @@ SENTTCB0SYNCED:
     ROL tcb0synch
     ; if negative, tcb0sync is too big
     BRCS SENTTCB0SYNCTOOBIG
-    MOV tcbgpr1, zero
+    CLR tcbgpr1
     SUB ZL, tcb0syncl
     SBC ZH, tcb0synch
 SENTTCB0CNT:
@@ -616,7 +634,7 @@ SENTTCB0COPYBUFF:
     RCALL TCBVALWRITE
     LDS tcbgpr0, tcb0buff+3
     RCALL TCBVALWRITE
-    MOV tcb0state, zero
+    CLR tcb0state
     RJMP SENTTCB0SYNCTOOSMALL
 
 SENTTCB0SYNCTOOBIG:
@@ -629,7 +647,7 @@ SENTTCB0SYNCTOOBIG:
     MOVW tcb0syncl, r0
     ; POP r1
     ; POP r0
-    MOV tcb0state, zero
+    CLR tcb0state
     RJMP SENTTCB0SYNCED
 SENTTCB0SYNCTOOSMALL:
     ; getting here means we need to use this pulse as sync pulse
@@ -643,7 +661,7 @@ SENTTCB0SYNCTOOSMALL:
     MOVW tcb0syncl, r0
     ; POP r1
     ; POP r0
-    MOV tcb0state, zero
+    CLR tcb0state
     LDI ZL, 0b00000011
     STS TCB0_INTFLAGS, ZL
     OUT CPU_SREG, lvl0SREG
@@ -726,7 +744,7 @@ SENTTCB1SYNCED:
     ROL tcb1synch
     ; if negative, tcb1sync is too big
     BRCS SENTTCB1SYNCTOOBIG
-    MOV tcbgpr1, zero
+    CLR tcbgpr1
     SUB ZL, tcb1syncl
     SBC ZH, tcb1synch
 SENTTCB1CNT:
@@ -775,7 +793,7 @@ SENTTCB1COPYBUFF:
     RCALL TCBVALWRITE
     LDS tcbgpr0, tcb1buff+3
     RCALL TCBVALWRITE
-    MOV tcb1state, zero
+    CLR tcb1state
     RJMP SENTTCB1SYNCTOOSMALL
 
 SENTTCB1SYNCTOOBIG:
@@ -788,7 +806,7 @@ SENTTCB1SYNCTOOBIG:
     MOVW tcb1syncl, r0
     ; POP r1
     ; POP r0
-    MOV tcb1state, zero
+    CLR tcb1state
     RJMP SENTTCB1SYNCED
 SENTTCB1SYNCTOOSMALL:
     ; getting here means we need to use this pulse as sync pulse
@@ -802,7 +820,7 @@ SENTTCB1SYNCTOOSMALL:
     MOVW tcb1syncl, r0
     ; POP r1
     ; POP r0
-    MOV tcb1state, zero
+    CLR tcb1state
     LDI ZL, 0b00000011
     STS TCB1_INTFLAGS, ZL
     OUT CPU_SREG, lvl0SREG
@@ -837,23 +855,23 @@ TCB1_INT_vect:
 
 .global main
 main:
+    CLR maingpr0
     ; initialize clock
     LDI maingpr0, 0xD8
     OUT CCP, maingpr0
-    STS CLKCTRL_MCLKCTRLB, zero
+    STS CLKCTRL_MCLKCTRLB, maingpr0
     ; initialize zero and states
-    LDI maingpr0, 0
-    MOV zero, maingpr0
-    MOV adcstate, zero
-    MOV adcacc, zero
-    MOV commrxstate, zero
-    MOV commtxstate, zero
-    MOV tcb0syncl, zero
-    MOV tcb0synch, zero
-    MOV tcb0state, zero
-    MOV tcb1syncl, zero
-    MOV tcb1synch, zero
-    MOV tcb1state, zero
+    CLR zero
+    CLR adcstate
+    CLR adcacc
+    CLR commrxstate
+    CLR commtxstate
+    CLR tcb0syncl
+    CLR tcb0synch
+    CLR tcb0state
+    CLR tcb1syncl
+    CLR tcb1synch
+    CLR tcb1state
     ; make ADC lower priority then TCB1
     LDI maingpr0, ADC0_RESRDY_vect_num
     STS CPUINT_LVL0PRI, maingpr0
