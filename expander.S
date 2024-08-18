@@ -856,13 +856,13 @@ TCB1_INT_vect:
 
 .global main
 main:
-    CLR maingpr0
+    ; initialize zero
+    CLR zero
     ; initialize clock
     LDI maingpr0, 0xD8
     OUT CCP, maingpr0
-    STS CLKCTRL_MCLKCTRLB, maingpr0
-    ; initialize zero and states
-    CLR zero
+    STS CLKCTRL_MCLKCTRLB, zero
+    ; states
     CLR adcstate
     CLR adcacc
     CLR commrxstate
