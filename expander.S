@@ -71,11 +71,9 @@
 .comm adcval, 14 * 2
 .comm tcb0buff, 4
 .comm tcb1buff, 4
+.comm tcb0previouspulse, 2
+.comm tcb1previouspulse, 2
 .comm adcbuff, 14 * 16 * 2
-tcb0previouspulse:
-.short 0
-tcb1previouspulse:
-.short 0
 
 .text
 #ifdef COMM_SPI

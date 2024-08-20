@@ -13,19 +13,21 @@ DEFS =
 #    -Map:      create map file
 #    --cref:    add cross reference to  map file
 LDFLAGS = 
-LDFLAGS += -Wl,-Tdata=0x803FFC
-LDFLAGS += -Wl,--defsym=tcb0cnt=0x803e00
-LDFLAGS += -Wl,--defsym=tcb0val=0x803e01
-LDFLAGS += -Wl,--defsym=tcb1cnt=0x803e05
-LDFLAGS += -Wl,--defsym=tcb1val=0x803e06
-LDFLAGS += -Wl,--defsym=gpioina=0x803e0A
-LDFLAGS += -Wl,--defsym=gpioinb=0x803e0B
-LDFLAGS += -Wl,--defsym=gpioinc=0x803e0C
-LDFLAGS += -Wl,--defsym=adccnt=0x803e0D
-LDFLAGS += -Wl,--defsym=adcval=0x803e0E
-LDFLAGS += -Wl,--defsym=tcb0buff=0x803e30
-LDFLAGS += -Wl,--defsym=tcb1buff=0x803e34
-LDFLAGS += -Wl,--defsym=adcbuff=0x803e3C
+LDFLAGS += -Wl,-Tdata=0x803FF6
+LDFLAGS += -Wl,--defsym=tcb0cnt=0x803E00
+LDFLAGS += -Wl,--defsym=tcb0val=0x803E01
+LDFLAGS += -Wl,--defsym=tcb1cnt=0x803E05
+LDFLAGS += -Wl,--defsym=tcb1val=0x803E06
+LDFLAGS += -Wl,--defsym=gpioina=0x803E0A
+LDFLAGS += -Wl,--defsym=gpioinb=0x803E0B
+LDFLAGS += -Wl,--defsym=gpioinc=0x803E0C
+LDFLAGS += -Wl,--defsym=adccnt=0x803E0D
+LDFLAGS += -Wl,--defsym=adcval=0x803E0E
+LDFLAGS += -Wl,--defsym=tcb0buff=0x803E2A
+LDFLAGS += -Wl,--defsym=tcb0previouspulse=0x803E2E
+LDFLAGS += -Wl,--defsym=tcb1buff=0x803E30
+LDFLAGS += -Wl,--defsym=tcb1previouspulse=0x803E34
+LDFLAGS += -Wl,--defsym=adcbuff=0x803E36
 
 # Define programs and commands.
 CC = avr-gcc
