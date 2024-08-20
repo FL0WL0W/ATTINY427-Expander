@@ -58,7 +58,7 @@ all: begin build size end
 # uart1: $(eval TARGET = expander_uart1)
 # uart1alt: $(eval TARGET = expander_uart1alt)
 # build
-build: elf bin 
+build: clean elf bin 
 
 elf: $(TARGET).elf
 bin: $(TARGET).bin
@@ -87,7 +87,7 @@ size:
 	@if test -f spi_alt_$(TARGET).elf; then echo $(MSG_SIZE) spi_alt; $(SPIALTSIZE); fi
 
 flash: $(TARGET).bin
-	@curl --data-binary @$(TARGET).bin http://192.168.4.1/upload/attiny/1
+	@curl --data-binary @spi_$(TARGET).bin http://192.168.4.1/upload/attiny/1
 
 
 # Create final output files (.bin) from ELF output file.

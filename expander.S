@@ -25,12 +25,12 @@
 #define lvl0SREG r4
 ;register used to store SREG during lvl0 interrupt
 
-#define commrxstate r16
+#define commrxstate r22
 ; bit 4 read address
 ; bit 5 set address high to 0
 ; bit 6 read address low
 ; bit 7 write
-#define commtxstate r17
+#define commtxstate r23
 #define commgpr r5
 ;register used for general purpose in spi interrupt
 
@@ -127,6 +127,7 @@ COMMTXCMDCONTINUATION:
     STS COMM_TXREG, commgpr
     ANDI commrxstate, 0b00001111
     ADD commtxstate, commrxstate
+    CLR commrxstate
     OUT CPU_SREG, lvl1SREG
     RETI
 
@@ -143,8 +144,8 @@ COMMRXPROCESS:
     SBRC commrxstate, 7
     RJMP COMMWRITE
     MOVW X, Y
+    ANDI commrxstate, 0b00001111
     MOV commtxstate, commrxstate
-    ANDI commtxstate, 0b00001111
     RJMP COMMREADCMD
 
 COMMWRITE:
@@ -164,25 +165,25 @@ COMMREADADDR:
     SBRS commrxstate, 6
     RJMP COMMREADADDRH
     SBRC commrxstate, 5
-    CLR XH
-    LDS XL, COMM_RXREG
+    CLR YH
+    LDS YL, COMM_RXREG
     ORI commrxstate, 0b00010000
     CPSE commtxstate, zero
     RJMP COMMTXPROCESS
     SBRS commrxstate, 7
-    STS COMM_TXREG, XL
+    STS COMM_TXREG, YL
     SBRC commrxstate, 7
     STS COMM_TXREG, zero
     OUT CPU_SREG, lvl1SREG
     RETI
 
 COMMREADADDRH:
-    LDS XH, COMM_RXREG
+    LDS YH, COMM_RXREG
     ORI commrxstate, 0b01000000
     CPSE commtxstate, zero
     RJMP COMMTXPROCESS
     SBRS commrxstate, 7
-    STS COMM_TXREG, XH
+    STS COMM_TXREG, YH
     SBRC commrxstate, 7
     STS COMM_TXREG, zero
     OUT CPU_SREG, lvl1SREG
@@ -191,6 +192,8 @@ COMMREADADDRH:
 .global ADC0_RESRDY_vect
 ADC0_RESRDY_vect:
     IN lvl0SREG, CPU_SREG
+    LDS adcvalreg0, ADC0_RESULT0
+    LDS adcvalreg1, ADC0_RESULT1
     LDS adcgpr, ADC0_MUXPOS
     ; * (2+2)
     LSL adcgpr
@@ -359,8 +362,6 @@ ADC0SETSAMPLE15:
 
 ADC0STARTSAMPLE:
     STS ADC0_MUXPOS, ZL
-    LDS adcvalreg0, ADC0_RESULT0
-    LDS adcvalreg1, ADC0_RESULT1
     LDI ZL, 0b00010001
     STS ADC0_COMMAND, ZL
 
