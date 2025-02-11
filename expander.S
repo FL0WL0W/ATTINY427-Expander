@@ -902,7 +902,7 @@ main:
 #endif
     LDI maingpr0, 0x00
     STS USART1_BAUDH, maingpr0
-    LDI maingpr0, 64
+    LDI maingpr0, 0x50
     STS USART1_BAUDL, maingpr0
     LDI maingpr0, 0b10000000
     STS USART1_CTRLA, maingpr0
@@ -922,7 +922,7 @@ main:
 #endif
     LDI maingpr0, 0x00
     STS USART0_BAUDH, maingpr0
-    LDI maingpr0, 64
+    LDI maingpr0, 0x50
     STS USART0_BAUDL, maingpr0
     LDI maingpr0, 0b10000000
     STS USART0_CTRLA, maingpr0
