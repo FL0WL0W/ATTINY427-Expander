@@ -902,7 +902,7 @@ main:
 #endif
     LDI maingpr0, 0x00
     STS USART1_BAUDH, maingpr0
-    LDI maingpr0, 0x50
+    LDI maingpr0, 64
     STS USART1_BAUDL, maingpr0
     LDI maingpr0, 0b10000000
     STS USART1_CTRLA, maingpr0
@@ -916,13 +916,13 @@ main:
 #ifdef COMM_ALT
     LDI maingpr0, 0b00000001
     STS PORTMUX_USARTROUTEA, maingpr0
-    SBI VPORTB_DIR, 2
-#else
     SBI VPORTA_DIR, 1
+#else
+    SBI VPORTB_DIR, 2
 #endif
     LDI maingpr0, 0x00
     STS USART0_BAUDH, maingpr0
-    LDI maingpr0, 0x50
+    LDI maingpr0, 64
     STS USART0_BAUDL, maingpr0
     LDI maingpr0, 0b10000000
     STS USART0_CTRLA, maingpr0
