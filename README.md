@@ -5,16 +5,16 @@ Default UART BAUDRATE is 2mhz.
 
 ## Command Byte
 * 1: Write bit 1 = write | 0 = read
+* 1: Continue previous operation for {length} more bytes (read/write length can use the next 6 bits)
 * 1: Address size bit 1 = 8 bit address | 0 = 16 bit address
 * 1: Address high bit set zero 1 = set address high to zero | 0 = reuse previous address high
-* 1: Continue previous operation for {length} more bytes
 * 4: read/write length
 
 ## Write Command
 The bytes returned will always be unrelated to a write command
 ```
            |        Write 3 bytes with 16 bit address        |        Write 2 bytes with 8 bit address         |
-           |  0x83   |  0x--   |  0x--   |  0x--   |  0x--   |  0x--   |  0xC2   |  0x--   |  0x--   |  0x--   |
+           |  0x83   |  0x--   |  0x--   |  0x--   |  0x--   |  0x--   |  0xA2   |  0x--   |  0x--   |  0x--   |
 MASTER:    | Command | Address | Address |  Write  |  Write  |  Write  | Command | Address |  Write  |  Write  |
 ATTINY:    |   N/A   |   N/A   |   N/A   |   N/A   |   N/A   |   N/A   |   N/A   |   N/A   |   N/A   |   N/A   |
 ```
@@ -25,7 +25,7 @@ A read command can be sent at any time. the new read command will interrupt the 
 A write command can also be sent while reading and will not interrupt the read.
 ```
            |     Read 3 bytes with 16 bit address       |  Read 2 bytes with 8 bit address |
-           |  0x03   |  0x--   |  0x--   |  0x00   |  0x62   |  0x--   |  0x00   |  0x00   |  0x00   |  0x00   |
+           |  0x03   |  0x--   |  0x--   |  0x00   |  0x32   |  0x--   |  0x00   |  0x00   |  0x00   |  0x00   |
 MASTER:    | Command | Address | Address |  0x00   | Command | Address |  0x00   |  0x00   |  0x00   |  0x00   |
 MISO:      |   N/A   |   N/A   | Command | Address | Address |  Read0  |  Read1  |  Read2  |  Read0  |  Read1  |
 ATTINYUART:| Command | Address | Address |  Read0  |  Read1  |  Read2  |  Read0  |  Read1  |  0x00   |  0x00   |
@@ -33,7 +33,7 @@ ATTINYUART:| Command | Address | Address |  Read0  |  Read1  |  Read2  |  Read0 
 ## Analog Reader
 To setup anlog pin reader. send this command
 ```
-0xE3 //write 3 bytes to 8 bit address with high byte = 0
+0xB3 //write 3 bytes to 8 bit address with high byte = 0
 0x1C //address low
 0xE0 //enable analog pins 5-7
 0x01 //analog enable pins 8, 10-15
@@ -49,7 +49,7 @@ Setup and start the ADC (See ATTiny427 datasheet for more information)
 0xA0 // set timebase and VDD as reference
 0x00 // no window source mode
 0x01 //enable RESRDY intterupt
-0xC3 //write 3 bytes to 8 bit address using existing high byte
+0xA3 //write 3 bytes to 8 bit address using existing high byte
 0x08 //address low
 0x05 //SAMPDUR = 5. this give a sample duration of 4us
 0x00 //no accumulation, accumulation done in software so the readings are evenly spaced
@@ -71,7 +71,7 @@ Refer to datasheet for how to setup Timer B
 Timer B can be setup to parse incoming SENT data from a sensor
 To setup SENT pin reader. send this command
 ```
-0x81 //write 1 bytes to 8 bit address with high byte = 0
+0xB1 //write 1 bytes to 8 bit address with high byte = 0
 0x1E //address low
 0x60 //This is shared with AnalogAccumulate register. bit 5 and 6 are the SENT decoder enabled for Timer B 0 and 1 respectively
      //Care should be taken to not overwrite any of the analog enable bits.

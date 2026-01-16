@@ -108,7 +108,7 @@ COMMREADCMD:
     RETI
 
 COMMTXCMD:
-    SBRC commrxstate, 4
+    SBRC commrxstate, 6
     RJMP COMMTXCMDCONTINUATION
     CPSE commtxstate, zero
     RJMP COMMTXPROCESS
@@ -123,7 +123,7 @@ COMMTXCMDCONTINUATION:
     CPSE commtxstate, zero
     DEC commtxstate
     STS COMM_TXREG, commgpr
-    ANDI commrxstate, 0b00001111
+    ANDI commrxstate, 0b00111111
     ADD commtxstate, commrxstate
     CLR commrxstate
     OUT CPU_SREG, lvl1SREG
@@ -137,12 +137,12 @@ COMMTXPROCESS:
     RETI
 
 COMMRXPROCESS:
-    SBRS commrxstate, 4
+    SBRS commrxstate, 6
     RJMP COMMREADADDR
     SBRC commrxstate, 7
     RJMP COMMWRITE
     MOVW X, Y
-    ANDI commrxstate, 0b00001111
+    ANDI commrxstate, 0b00111111
     MOV commtxstate, commrxstate
     RJMP COMMREADCMD
 
@@ -160,9 +160,9 @@ COMMWRITE:
     RETI
 
 COMMREADADDR:
-    SBRS commrxstate, 6
+    SBRS commrxstate, 5
     RJMP COMMREADADDRH
-    SBRC commrxstate, 5
+    SBRC commrxstate, 4
     CLR YH
     LDS YL, COMM_RXREG
     ORI commrxstate, 0b00010000
