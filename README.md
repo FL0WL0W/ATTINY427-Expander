@@ -5,7 +5,7 @@ Default UART BAUDRATE is 2mhz.
 
 ## Command Byte
 * 1: Write bit 1 = write | 0 = read
-* 1: Continue previous operation for {length} more bytes (read/write length can use the next 6 bits)
+* 1: Continue previous operation for {length} more bytes (read length can use the next 6 bits)
 * 1: Address size bit 1 = 8 bit address | 0 = 16 bit address
 * 1: Address high bit set zero 1 = set address high to zero | 0 = reuse previous address high
 * 4: read/write length

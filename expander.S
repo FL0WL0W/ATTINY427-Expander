@@ -142,7 +142,7 @@ COMMRXPROCESS:
     SBRC commrxstate, 7
     RJMP COMMWRITE
     MOVW X, Y
-    ANDI commrxstate, 0b00111111
+    ANDI commrxstate, 0b00001111
     MOV commtxstate, commrxstate
     RJMP COMMREADCMD
 
@@ -152,7 +152,7 @@ COMMWRITE:
     DEC commrxstate
     ANDI commrxstate, 0b00001111
     CPSE commrxstate, zero
-    ORI commrxstate, 0b10010000
+    ORI commrxstate, 0b11000000
     CPSE commtxstate, zero
     RJMP COMMTXPROCESS
     STS COMM_TXREG, zero
@@ -165,7 +165,7 @@ COMMREADADDR:
     SBRC commrxstate, 4
     CLR YH
     LDS YL, COMM_RXREG
-    ORI commrxstate, 0b00010000
+    ORI commrxstate, 0b01000000
     CPSE commtxstate, zero
     RJMP COMMTXPROCESS
     SBRS commrxstate, 7
@@ -177,7 +177,7 @@ COMMREADADDR:
 
 COMMREADADDRH:
     LDS YH, COMM_RXREG
-    ORI commrxstate, 0b01000000
+    ORI commrxstate, 0b00100000
     CPSE commtxstate, zero
     RJMP COMMTXPROCESS
     SBRS commrxstate, 7
